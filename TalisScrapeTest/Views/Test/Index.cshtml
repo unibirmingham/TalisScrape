@@ -1,0 +1,25 @@
+﻿@using TalisScraper
+@using TalisScraper.Objects
+@model Items
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+@if (Model == null)
+{
+    <div>Generic error message</div>
+}
+else
+{
+
+    if (Model.OrganizationalUnit.HasContent())
+    {
+        <strong>Discovered Schools</strong>
+        foreach (var item in Model.OrganizationalUnit)
+        {
+            <div>@item.Value</div>
+        }
+    }
+}
