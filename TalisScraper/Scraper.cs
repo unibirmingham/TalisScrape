@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using TalisScraper.Objects;
 
@@ -27,14 +28,25 @@ namespace TalisScraper
             }
         }
 
-        public Items FetchItems(string name)
+        public Base FetchItems(string name)
         {
             var json = FetchJson(name);
 
             if (string.IsNullOrEmpty(json))
                 return null;
+            //var ttt = "\"([^\\}]+)\"";
+            var replaceRootRegex = new Regex("\"([^\"]+)\"");
 
-            return JsonConvert.DeserializeObject<Items>(json);
+            var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
+
+            return JsonConvert.DeserializeObject<Base>(finalJson);
+        }
+
+        public T FetchItems<T>(string name)
+        {
+            var json = FetchJson(name);
+
+            return JsonConvert.DeserializeObject<T>(json);
         }
     }
 }

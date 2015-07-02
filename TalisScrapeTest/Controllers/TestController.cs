@@ -11,12 +11,13 @@ namespace TalisScrapeTest.Controllers
         {
             _scraper = MvcApplication.Container.Resolve<IScraper>();
         }
-        // GET: Test
-        public ActionResult Index()
-        {//[DataMember(Name = "http://demo.talisaspire.com/")]
-            var schools = _scraper.FetchItems("http://demo.talisaspire.com/index.json");
 
-            return View(schools);
+        public ActionResult Index(string id)
+        {
+            var name = id ?? "http://demo.talisaspire.com/index.json";
+            var baseItem = _scraper.FetchItems(name);//"http://demo.talisaspire.com/index.json");
+
+            return View(baseItem);
         }
     }
 }

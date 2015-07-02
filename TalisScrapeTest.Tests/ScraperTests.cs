@@ -17,6 +17,16 @@ namespace TalisScrapeTest.Tests
             return Json;
         }
 
+        Base IScraper.FetchItems(string items)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public T FetchItems<T>(string items)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Items FetchItems(string name)
         {
             var json = FetchJson();
@@ -79,7 +89,7 @@ namespace TalisScrapeTest.Tests
         {
             _scraper.Json = genericJson;//"{\"22\":[{\"Value\":\"val1\",\"Type\":\"val2\"}]}";
 
-            Assert.NotNull(_scraper.FetchItems("dsfds").Code);
+            Assert.NotNull(_scraper.FetchItems("dsfds"));
         }
 
 

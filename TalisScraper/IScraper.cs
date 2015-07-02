@@ -6,6 +6,8 @@ namespace TalisScraper
     {
         string FetchJson(string name = "");
 
-        Items FetchItems(string items);
+        Base FetchItems(string items);
+
+        T FetchItems<T>(string items);
     }
 }

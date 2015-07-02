@@ -1,0 +1,21 @@
+﻿@using TalisScraper
+@using TalisScraper.Objects
+@model IEnumerable<Element>
+
+   @if (Model.HasContent())
+   {
+       var browsable = ViewData["browsable"] != null;
+
+       foreach (var item in Model)
+       {
+           if (browsable)
+           {
+               <div><a href="@string.Format("/?id={0}.json", item.Value)">@item.Value</a></div>
+           }
+           else
+           {
+            <div>@item.Value</div>
+           }
+
+       }
+   }

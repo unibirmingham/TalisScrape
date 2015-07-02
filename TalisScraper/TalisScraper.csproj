@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Extensions.cs" />
     <Compile Include="IScraper.cs" />
+    <Compile Include="Objects\Items.cs" />
     <Compile Include="Objects\Modules.cs" />
     <Compile Include="Objects\Schools.cs" />
     <Compile Include="Scraper.cs" />
