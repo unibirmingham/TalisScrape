@@ -1,0 +1,21 @@
+﻿@model dynamic
+@{
+    ViewBag.Title = "Dynamic";
+}
+
+@if (Model == null)
+{
+    <div>Generic error message</div>
+    <a href="\">Dynamic</a>
+}
+else
+{
+
+        foreach (var item in Model)
+        {
+            <div>@item</div>
+        }
+
+
+    <a href="\">Home</a>
+}

@@ -26,6 +26,17 @@ namespace TalisScraper.Objects
 
         [DataMember(Name = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")]
         public IEnumerable<Element> Type { get; set; }
+
+        [DataMember(Name = "http://purl.org/vocab/resourcelist/schema#usesList")]
+        public IEnumerable<Element> UsesList { get; set; }
+
+        [DataMember(Name = "http://purl.org/vocab/resourcelist/schema#contains")]
+        public IEnumerable<Element> Contains { get; set; }
+
+        [DataMember(Name = "http://purl.org/vocab/resourcelist/schema#anticipatedStudentNumbers")]
+        public IEnumerable<Element> AnticipatedStudentNumbers { get; set; }
+
+
     }
 
     public class Element

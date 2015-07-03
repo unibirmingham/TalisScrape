@@ -15,7 +15,19 @@ namespace TalisScrapeTest.Controllers
         public ActionResult Index(string id)
         {
             var name = id ?? "http://demo.talisaspire.com/index.json";
-            var baseItem = _scraper.FetchItems(name);//"http://demo.talisaspire.com/index.json");
+            var baseItem = _scraper.FetchItems(name);
+
+          //  var parseTest = _scraper.ParseTest();//pass root in here?
+
+          //  ViewBag.ParseTest = parseTest;
+
+            return View(baseItem);
+        }
+
+        public ActionResult Dynamic(string id)
+        {
+            var name = id ?? "http://demo.talisaspire.com/index.json";
+            var baseItem = _scraper.FetchDyn(name);
 
             return View(baseItem);
         }

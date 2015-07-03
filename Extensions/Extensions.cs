@@ -2,7 +2,7 @@
 using System.Linq;
 using ServiceStack.Text;
 
-namespace TalisScraper
+namespace Extensions
 {
     public static class Extensions
     {

@@ -4,6 +4,8 @@
     ViewBag.Title = "Index";
 }
 
+
+
 @if (Model == null || Model.Items == null)
 {
     <div>Generic error message</div>
@@ -32,6 +34,14 @@ else
     <h4>Part Of</h4>
     @Html.Partial("_elementViewTemplate", Model.Items.PartOf, new ViewDataDictionary { { "Browsable", "true" } })
 
+    <h4>Uses List</h4>
+    @Html.Partial("_elementViewTemplate", Model.Items.UsesList, new ViewDataDictionary { { "Browsable", "true" } })
+
+    <h4>Anticipated Student Numbers</h4>
+    @Html.Partial("_elementViewTemplate", Model.Items.AnticipatedStudentNumbers, new ViewDataDictionary())
+
+    <h4>Contains</h4>
+    @Html.Partial("_elementViewTemplate", Model.Items.Contains, new ViewDataDictionary { { "Browsable", "true" } })
 
     <a href="\">Home</a>
 }

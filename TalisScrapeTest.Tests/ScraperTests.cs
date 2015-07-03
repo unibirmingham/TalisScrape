@@ -1,6 +1,10 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using System.Dynamic;
+using NUnit.Framework;
 using TalisScraper;
 using TalisScraper.Objects;
+using System.Web.Helpers;
+using Extensions;
 
 namespace TalisScrapeTest.Tests
 {
@@ -22,7 +26,17 @@ namespace TalisScrapeTest.Tests
             throw new System.NotImplementedException();
         }
 
+        public dynamic FetchDyn(string name)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public T FetchItems<T>(string items)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public IEnumerable<string> ParseTest()
         {
             throw new System.NotImplementedException();
         }
@@ -37,6 +51,8 @@ namespace TalisScrapeTest.Tests
             //var jReader = new JsonFx.Json.JsonReader();
             //JOb
             var schools = json.FromJson<Items>(); //JsonConvert.DeserializeObject<Schools>(json);//.Read<Schools>(json);//json.FromJson<Schools>();
+
+            var dyTst = System.Web.Helpers.Json.Decode(json);
 
             return schools;
         }

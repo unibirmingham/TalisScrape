@@ -1,4 +1,5 @@
-﻿using TalisScraper.Objects;
+﻿using System.Collections.Generic;
+using TalisScraper.Objects;
 
 namespace TalisScraper
 {
@@ -8,6 +9,10 @@ namespace TalisScraper
 
         Base FetchItems(string items);
 
+        dynamic FetchDyn(string name);
+
         T FetchItems<T>(string items);
+
+        IEnumerable<string> ParseTest();
     }
 }

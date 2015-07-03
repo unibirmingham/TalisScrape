@@ -1,21 +1,25 @@
-﻿@using TalisScraper
+﻿@using Extensions
 @using TalisScraper.Objects
 @model IEnumerable<Element>
 
-   @if (Model.HasContent())
-   {
-       var browsable = ViewData["browsable"] != null;
+@if (Model.HasContent())
+{
+    var browsable = ViewData["browsable"] != null;
 
-       foreach (var item in Model)
-       {
-           if (browsable)
-           {
-               <div><a href="@string.Format("/?id={0}.json", item.Value)">@item.Value</a></div>
-           }
-           else
-           {
-            <div>@item.Value</div>
-           }
+    foreach (var item in Model)
+    {
+        <div>
+            @if (item.Value.Contains("/items/"))
+            {<span class="glyphicon glyphicon-book" aria-hidden="true"></span>}
 
-       }
-   }
+            @if (browsable)
+            {
+                <a href="@string.Format("/?id={0}.json", item.Value)">@item.Value</a>
+            }
+            else
+            {
+                @item.Value
+            }
+        </div>
+    }
+}
