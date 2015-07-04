@@ -1,5 +1,9 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Web.Mvc;
 using TalisScraper;
+using TalisScraper.Objects;
 
 namespace TalisScrapeTest.Controllers
 {
@@ -12,24 +16,55 @@ namespace TalisScrapeTest.Controllers
             _scraper = MvcApplication.Container.Resolve<IScraper>();
         }
 
-        public ActionResult Index(string id)
+        public async Task<ActionResult> Index(string id)
         {
             var name = id ?? "http://demo.talisaspire.com/index.json";
-            var baseItem = _scraper.FetchItems(name);
+           // var baseItem = await _scraper.FetchItems(name);
 
-          //  var parseTest = _scraper.ParseTest();//pass root in here?
+            var stopwatch = new Stopwatch();
+            
+            stopwatch.Start();
+            var parseTest = await _scraper.ParseTestAsync();//pass root in here?
+            stopwatch.Stop();
 
-          //  ViewBag.ParseTest = parseTest;
+            var ts = stopwatch.Elapsed;
+            var elapsedTime = String.Format("{0}ms", ts.TotalMilliseconds);
 
-            return View(baseItem);
+            Response.Write(elapsedTime);
+
+            ViewBag.ParseTest = parseTest;
+
+            return View(new Base());
         }
 
-        public ActionResult Dynamic(string id)
+        public ActionResult Index1(string id)
+        {
+            var name = id ?? "http://demo.talisaspire.com/index.json";
+            // var baseItem = await _scraper.FetchItems(name);
+
+            var stopwatch = new Stopwatch();
+
+            stopwatch.Start();
+            var parseTest = _scraper.ParseTest();//pass root in here?
+            stopwatch.Stop();
+
+            var ts = stopwatch.Elapsed;
+            var elapsedTime = String.Format("{0}ms", ts.TotalMilliseconds);
+
+            Response.Write(elapsedTime);
+
+            ViewBag.ParseTest = parseTest;
+
+            return View(new Base());
+        }
+
+
+       /* public ActionResult Dynamic(string id)
         {
             var name = id ?? "http://demo.talisaspire.com/index.json";
             var baseItem = _scraper.FetchDyn(name);
 
-            return View(baseItem);
-        }
+            return System.Web.UI.WebControls.View(baseItem);
+        }*/
     }
 }

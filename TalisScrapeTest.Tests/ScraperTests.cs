@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using TalisScraper;
 using TalisScraper.Objects;
@@ -16,9 +17,9 @@ namespace TalisScrapeTest.Tests
     class ScraperTest : IScraperTest
     {
         public string Json { get; set; }
-        public new string FetchJson(string name = "")
+        public new Task<string> FetchJson(string name = "")
         {
-            return Json;
+            return null;
         }
 
         Base IScraper.FetchItems(string items)
@@ -43,7 +44,7 @@ namespace TalisScrapeTest.Tests
 
         public Items FetchItems(string name)
         {
-            var json = FetchJson();
+            /*var json = FetchJson();
 
             if (string.IsNullOrEmpty(json))
                 return null;
@@ -54,7 +55,8 @@ namespace TalisScrapeTest.Tests
 
             var dyTst = System.Web.Helpers.Json.Decode(json);
 
-            return schools;
+            return schools;*/
+            return null;
         }
     }
  /*

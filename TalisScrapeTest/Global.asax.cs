@@ -3,6 +3,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using Cache;
 using Funq;
+using NLog;
 using TalisScraper;
 
 namespace TalisScrapeTest
@@ -19,8 +20,12 @@ namespace TalisScrapeTest
             Container = new Container();
 
             Container.Register<ICache>(new Cache.Cache.DotNetCache());
-            Container.Register<IScraper>(new Scraper {Cache = Container.Resolve<ICache>()});
+            Container.Register<IScraper>(new Scraper
+            {
+                Cache = Container.Resolve<ICache>(),
+            });
             
+
         }
     }
 }
