@@ -9,18 +9,23 @@ using TalisScraper.Objects;
 using Cache;
 using Extensions;
 using NLog;
+using TalisScraper.Events;
 
 
 namespace TalisScraper
 {
     public class Scraper : IScraper
     {
-        private const string RootDoc = "http://demo.talisaspire.com/index.json";
-      //  private WebClient wc;
+        private const string RootDoc = "http://aspire.aber.ac.uk/index.json";//"http://demo.talisaspire.com/index.json";
+        private WebClient wc;
 
         public Scraper()
         {
-            //   wc = new WebClient();
+               wc = new WebClient();
+
+            ServicePointManager.Expect100Continue = false;
+            ServicePointManager.DefaultConnectionLimit = 300;
+
             Log = LogManager.GetCurrentClassLogger();
         }
 
@@ -28,17 +33,24 @@ namespace TalisScraper
         public ICache Cache { get; set; }
         
         #region Async Functions
+
+        public event ResourceScrapedHandler ResourceScraped;
+
         public async Task<string> FetchJsonAsync(string name = "")
         {
            // await Task.Yield();
             using (var wc = new WebClient())
             {
+                //wc.Proxy = ;
                 var json = string.Empty;
+
+                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(name, string.Empty));
 
                 try
                 {
                     json = await wc.DownloadStringTaskAsync(new Uri(name));
 
+                   
                 }
                 catch (Exception ex)
                 {
@@ -52,7 +64,7 @@ namespace TalisScraper
         public async Task<Base> FetchItemsAsync(string name)
         {
            // await Task.Yield();
-            Base basObj = Cache.FetchItem<Base>(name);
+            Base basObj = null;//Cache.FetchItem<Base>(name);
 
             if (basObj == null)
             {

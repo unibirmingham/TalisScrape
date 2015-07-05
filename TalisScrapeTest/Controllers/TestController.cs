@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using TalisScraper;
+using TalisScraper.Events;
 using TalisScraper.Objects;
 
 namespace TalisScrapeTest.Controllers
@@ -18,13 +19,24 @@ namespace TalisScrapeTest.Controllers
 
         public async Task<ActionResult> Index(string id)
         {
-            var name = id ?? "http://demo.talisaspire.com/index.json";
-           // var baseItem = await _scraper.FetchItems(name);
+            var name = id ?? "http://demo.talisaspire.com/index.json";//"http://aspire.aber.ac.uk/index.json";
+            var baseItem = await _scraper.FetchItemsAsync(name);
+
+            return View(baseItem);
+        }
+
+        public void ItemScraped(object sender, ResourceScrapedEventArgs args)
+        {
+            Response.Write("tick" + args.ResourceValue);
+        }
+
+        public ActionResult DoScrape()
+        {
 
             var stopwatch = new Stopwatch();
-            
+       //     _scraper.ResourceScraped += ItemScraped;
             stopwatch.Start();
-            var parseTest = await _scraper.ParseTestAsync();//pass root in here?
+            var parseTest =  _scraper.ParseTest();//Async();//pass root in here?
             stopwatch.Stop();
 
             var ts = stopwatch.Elapsed;
@@ -33,6 +45,8 @@ namespace TalisScrapeTest.Controllers
             Response.Write(elapsedTime);
 
             ViewBag.ParseTest = parseTest;
+
+
 
             return View(new Base());
         }
