@@ -1,0 +1,5 @@
+2015-07-06 11:01:46.8798|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
+2015-07-06 11:08:53.4691:Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
+2015-07-06 11:13:36.2391|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
+2015-07-06 11:19:21.3329|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
+2015-07-06 12:33:41.1617|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.

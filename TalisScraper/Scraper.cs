@@ -9,46 +9,46 @@ using TalisScraper.Objects;
 using Cache;
 using Extensions;
 using NLog;
-using TalisScraper.Events;
+using TalisScraper.Enums;
+using TalisScraper.Events.Args;
 
 
 namespace TalisScraper
 {
     public class Scraper : IScraper
     {
-        private const string RootDoc = "http://aspire.aber.ac.uk/index.json";//"http://demo.talisaspire.com/index.json";
-        private WebClient wc;
+        private const string RootRegex = "\"([^\"]+)\"";
 
         public Scraper()
         {
-               wc = new WebClient();
-
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.DefaultConnectionLimit = 300;
 
-            Log = LogManager.GetCurrentClassLogger();
+            Log = LogManager.GetCurrentClassLogger();//todo: inject this in?
         }
 
         public ILogger Log { get; set; }
         public ICache Cache { get; set; }
         
         #region Async Functions
+        public event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
+        public event EventHandler<ScrapeStartedEventArgs> ScrapeStarted;
+        public event EventHandler<ResourceScrapedEventArgs> ResourceScraped;
 
-        public event ResourceScrapedHandler ResourceScraped;
-
-        public async Task<string> FetchJsonAsync(string name = "")
+        /// <summary>
+        /// Fetches json object from the specified uri using async
+        /// </summary>
+        /// <param name="uri">uri of json object</param>
+        /// <returns>a string json object</returns>
+        internal async Task<string> FetchJsonAsync(string uri)
         {
-           // await Task.Yield();
             using (var wc = new WebClient())
             {
-                //wc.Proxy = ;
                 var json = string.Empty;
-
-                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(name, string.Empty));
 
                 try
                 {
-                    json = await wc.DownloadStringTaskAsync(new Uri(name));
+                    json = await wc.DownloadStringTaskAsync(new Uri(uri));
 
                    
                 }
@@ -61,37 +61,48 @@ namespace TalisScraper
             }
         }
 
-        public async Task<Base> FetchItemsAsync(string name)
+        internal async Task<NavItem> FetchItemsInternalAsync(string uri)
         {
-           // await Task.Yield();
-            Base basObj = null;//Cache.FetchItem<Base>(name);
+            var basObj = Cache.FetchItem<NavItem>(uri);
 
             if (basObj == null)
             {
 
-                var json = await FetchJsonAsync(name);
+                var json = await FetchJsonAsync(uri);
 
                 if (string.IsNullOrEmpty(json))
                     return null;
-                //var ttt = "\"([^\\}]+)\"";
-                Regex replaceRootRegex = new Regex("\"([^\"]+)\"");//, RegexOptions.Compiled);
+                var replaceRootRegex = new Regex(RootRegex);
 
                 var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
 
-
-
-                basObj = JsonConvert.DeserializeObject<Base>(finalJson);
-
+                basObj = JsonConvert.DeserializeObject<NavItem>(finalJson);
 
                 if (basObj != null)
-                    Cache.PutItem(basObj, name);
+                {
+                    if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
 
+                    Cache.PutItem(basObj, uri);
+                }
+            }
+            else
+            {
+                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri, true));
             }
 
             return basObj;
         }
 
-        private async Task RecParseAsync(string loc, List<string> list)
+        public async Task<NavItem> FetchItemsAsync(string uri)
+        {
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+            var items = await FetchItemsInternalAsync(uri);
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+
+            return items;
+        }
+
+        private async Task RecParseAsync(string loc, List<ReadingList> list)
         {
            // await Task.Yield();
             var items = await FetchItemsAsync(loc);
@@ -110,25 +121,38 @@ namespace TalisScraper
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => n.Value));
+                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList {Uri = n.Value}));
                 }
             }
         }
 
-        public async Task<IEnumerable<string>> ParseTestAsync()
+        public async Task<IEnumerable<ReadingList>> ScrapeReadingListsAsync(string root)
         {
-           // await Task.Yield();
-            var lists = new List<string>();
+            if (string.IsNullOrEmpty(root))
+            {
+                Log.Error("Scraper.ParseTest: Could not initiate scrape. The root node address was empty.");
+                return null;
+            }
 
-            await RecParseAsync(RootDoc, lists);
+            var lists = new List<ReadingList>();
+
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+
+            await RecParseAsync(root, lists);
+
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
             return lists;
         }
-
         #endregion
 
         #region Sync Functions
-        public string FetchJson(string name = "")
+        /// <summary>
+        /// Fetches json object from the specified uri
+        /// </summary>
+        /// <param name="uri">uri of json object</param>
+        /// <returns>a string json object</returns>
+        internal string FetchJson(string uri)
         {
             using (var wc = new WebClient())
             {
@@ -136,7 +160,7 @@ namespace TalisScraper
 
                 try
                 {
-                    json = wc.DownloadString(new Uri(name));
+                    json = wc.DownloadString(new Uri(uri));
 
                 }
                 catch (Exception ex)
@@ -148,66 +172,86 @@ namespace TalisScraper
             }
         }
 
-        public Base FetchItems(string name)
+        /// <summary>
+        /// Fetches Items, has been made internal so the public Fetch Item func can fire scrape start and stop events for individual items
+        /// </summary>
+        internal NavItem FetchItemsInternal(string uri)
         {
-
-            Base basObj = null;//Cache.FetchItem<Base>(name);
+            var basObj = Cache.FetchItem<NavItem>(uri);
 
             if (basObj == null)
             {
-
-                var json = FetchJson(name);
+                var json = FetchJson(uri);
 
                 if (string.IsNullOrEmpty(json))
                     return null;
-                //var ttt = "\"([^\\}]+)\"";
-                var replaceRootRegex = new Regex("\"([^\"]+)\"");
+
+                var replaceRootRegex = new Regex(RootRegex);
 
                 var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
 
-
-
-                basObj = JsonConvert.DeserializeObject<Base>(finalJson);
-
+                basObj = JsonConvert.DeserializeObject<NavItem>(finalJson);
 
                 if (basObj != null)
-                    Cache.PutItem(basObj, name);
-
+                {
+                    Cache.PutItem(basObj, uri);
+                    if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
+                }
+            }
+            else
+            {
+                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri, true));
             }
 
             return basObj;
         }
 
-
-        private void recParse(string loc, ref List<string> list)
+        public NavItem FetchItems(string uri)
         {
-            var items = FetchItems(loc);
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+            var items = FetchItemsInternal(uri);
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+
+            return items;
+        }
+
+        private void RecParse(string loc, ref List<ReadingList> list)
+        {
+            var items = FetchItemsInternal(loc);
 
             if (items != null)
             {
                 foreach (var ou in items.Items.OrganizationalUnit ?? new Element[] { })
                 {
-                    recParse(string.Format("{0}.json", ou.Value), ref list);
+                    RecParse(string.Format("{0}.json", ou.Value), ref list);
                 }
 
                 foreach (var ou in items.Items.KnowledgeGrouping ?? new Element[] { })
                 {
-                    recParse(string.Format("{0}.json", ou.Value), ref list);
+                    RecParse(string.Format("{0}.json", ou.Value), ref list);
                 }
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => n.Value));
+                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList { Uri = n.Value }));
                 }
             }
 
         }
 
-        public IEnumerable<string> ParseTest()
+        public IEnumerable<ReadingList> ScrapeReadingLists(string root)
         {
-            var lists = new List<string>();
+            if (string.IsNullOrEmpty(root))
+            {
+                Log.Fatal("Scraper.ParseTest: Could not initiate scrape. The root node address was empty.");
+                return null;
+            }
 
-            recParse(RootDoc, ref lists);
+            var lists = new List<ReadingList>();
+
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+            RecParse(root, ref lists);
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
             return lists;
         }

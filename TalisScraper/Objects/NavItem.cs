@@ -3,7 +3,7 @@
 namespace TalisScraper.Objects
 {
     [DataContract]
-    public class Base
+    public class NavItem
     {
         [DataMember(Name = "root")]
         public Items Items { get; set; }

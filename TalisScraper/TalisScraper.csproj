@@ -71,15 +71,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enum.cs" />
     <Compile Include="Events\Events.cs" />
     <Compile Include="IScraper.cs" />
     <Compile Include="Objects\Items.cs" />
-    <Compile Include="Objects\Base.cs" />
+    <Compile Include="Objects\NavItem.cs" />
+    <Compile Include="Objects\ReadingList.cs" />
     <Compile Include="Scraper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="nlog.config" />
+    <None Include="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

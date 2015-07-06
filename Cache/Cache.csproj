@@ -40,7 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cache.cs" />
+    <Compile Include="DevNullCacheProvider.cs" />
+    <Compile Include="MemoryCacheProvider.cs" />
     <Compile Include="ICache.cs" />
     <Compile Include="Objects\CacheDependency.cs" />
     <Compile Include="Objects\CacheDependencyItem.cs" />

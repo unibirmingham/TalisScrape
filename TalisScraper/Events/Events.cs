@@ -1,19 +1,44 @@
-﻿using System;
+﻿//#######################################################
+//## Delegates and Event Args are defined in this file ##
+//#######################################################
+using System;
+using TalisScraper.Enums;
 
-namespace TalisScraper.Events
-{
-    public delegate void ResourceScrapedHandler(object sender, ResourceScrapedEventArgs args);
-
-
+namespace TalisScraper.Events.Args
+{//Args for scrape events
     public class ResourceScrapedEventArgs : EventArgs
     {
-        public string ResourceValue { get; internal set; }        
-        public string ResourceType { get; internal set; }
+        public string URI { get; internal set; }
+        public bool FromCache { get; internal set; }
 
-        public ResourceScrapedEventArgs(string resourceValue, string resourceType)
+        public ResourceScrapedEventArgs(string uri, bool fromCache = false)
         {
-            ResourceValue = ResourceValue;            
-            ResourceType = resourceType;
+            URI = uri;            
+            FromCache = fromCache;
+        }
+    }
+
+    public class ScrapeStartedEventArgs : EventArgs
+    {
+        public ScrapeType Type { get; internal set; }
+        public DateTime Started { get; internal set; }
+
+        public ScrapeStartedEventArgs(ScrapeType type)
+        {
+            Type = type;
+            Started = DateTime.Now;
+        }
+    }
+
+    public class ScrapeEndedEventArgs : EventArgs
+    {
+        public ScrapeType Type { get; internal set; }
+        public DateTime Ended { get; internal set; }
+
+        public ScrapeEndedEventArgs(ScrapeType type)
+        {
+            Type = type;
+            Ended = DateTime.Now;
         }
     }
 }

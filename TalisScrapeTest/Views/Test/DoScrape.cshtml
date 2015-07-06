@@ -1,11 +1,13 @@
 ﻿@using TalisScraper.Objects
-@model Base
+@model NavItem
 @{
     ViewBag.Title = "Index";
 }
 
-@ViewBag.ParseTest.Count
-
+@if (ViewBag.ParseTest != null)
+{
+    @ViewBag.ParseTest.Count
+}
 @if (Model == null || Model.Items == null)
 {
     <div>Generic error message</div>
