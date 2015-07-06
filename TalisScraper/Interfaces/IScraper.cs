@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using TalisScraper.Events.Args;
 using TalisScraper.Objects;
 
-namespace TalisScraper
+namespace TalisScraper.Interfaces
 {
     /// <summary>
     /// Scraper to fetch and parse Talis Aspire json reading list information

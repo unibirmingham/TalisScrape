@@ -6,6 +6,7 @@ using System.Web.Mvc;
 using TalisScraper;
 using TalisScraper.Events;
 using TalisScraper.Events.Args;
+using TalisScraper.Interfaces;
 using TalisScraper.Objects;
 
 namespace TalisScrapeTest.Controllers

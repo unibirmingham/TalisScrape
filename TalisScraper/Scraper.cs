@@ -11,6 +11,7 @@ using Extensions;
 using NLog;
 using TalisScraper.Enums;
 using TalisScraper.Events.Args;
+using TalisScraper.Interfaces;
 
 
 namespace TalisScraper
@@ -18,13 +19,15 @@ namespace TalisScraper
     public class Scraper : IScraper
     {
         private const string RootRegex = "\"([^\"]+)\"";
+        private readonly IRequestHandler _requestHandler;
 
-        public Scraper()
+        public Scraper(IRequestHandler requestHandler)
         {
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.DefaultConnectionLimit = 300;
 
             Log = LogManager.GetCurrentClassLogger();//todo: inject this in?
+            _requestHandler = requestHandler;
         }
 
         public ILogger Log { get; set; }
@@ -42,23 +45,7 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal async Task<string> FetchJsonAsync(string uri)
         {
-            using (var wc = new WebClient())
-            {
-                var json = string.Empty;
-
-                try
-                {
-                    json = await wc.DownloadStringTaskAsync(new Uri(uri));
-
-                   
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex);
-                }
-
-                return json;
-            }
+            return await _requestHandler.FetchJsonAsync(new Uri(uri));
         }
 
         internal async Task<NavItem> FetchItemsInternalAsync(string uri)
@@ -154,22 +141,7 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal string FetchJson(string uri)
         {
-            using (var wc = new WebClient())
-            {
-                var json = string.Empty;
-
-                try
-                {
-                    json = wc.DownloadString(new Uri(uri));
-
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex);
-                }
-
-                return json;
-            }
+            return _requestHandler.FetchJson(new Uri(uri));
         }
 
         /// <summary>

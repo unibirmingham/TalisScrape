@@ -4,6 +4,7 @@ using System.Web.Routing;
 using Cache;
 using Funq;
 using TalisScraper;
+using TalisScraper.Interfaces;
 
 namespace TalisScrapeTest
 {
@@ -19,7 +20,8 @@ namespace TalisScrapeTest
             Container = new Container();
 
             Container.Register<ICache>(new DevNullCacheProvider());
-            Container.Register<IScraper>(new Scraper
+            Container.Register<IRequestHandler>(new WebClientRequestHandler());
+            Container.Register<IScraper>(new Scraper(Container.Resolve<IRequestHandler>())
             {
                 Cache = Container.Resolve<ICache>(),
             });

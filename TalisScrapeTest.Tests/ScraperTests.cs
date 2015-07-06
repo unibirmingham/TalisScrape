@@ -1,94 +1,71 @@
-﻿using System.Collections.Generic;
-using System.Dynamic;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Cache;
+using Moq;
 using NUnit.Framework;
 using TalisScraper;
+using TalisScraper.Interfaces;
 using TalisScraper.Objects;
-using System.Web.Helpers;
-using Extensions;
+
 
 namespace TalisScrapeTest.Tests
 {
-    interface IScraperTest : IScraper
-    {
-        string Json { get; set; }
-    }
 
-    class ScraperTest : IScraperTest
-    {
-        public string Json { get; set; }
-        public new Task<string> FetchJson(string name = "")
-        {
-            return null;
-        }
-
-        Base IScraper.FetchItems(string items)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public dynamic FetchDyn(string name)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public T FetchItems<T>(string items)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public IEnumerable<string> ParseTest()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Items FetchItems(string name)
-        {
-            /*var json = FetchJson();
-
-            if (string.IsNullOrEmpty(json))
-                return null;
-
-            //var jReader = new JsonFx.Json.JsonReader();
-            //JOb
-            var schools = json.FromJson<Items>(); //JsonConvert.DeserializeObject<Schools>(json);//.Read<Schools>(json);//json.FromJson<Schools>();
-
-            var dyTst = System.Web.Helpers.Json.Decode(json);
-
-            return schools;*/
-            return null;
-        }
-    }
- /*
- * ################################################
- * ############# NAMING CONVENTION ################
- * ################################################
- * # MethodName_StateUnderTest_ ExpectedBehaviour #
- * ################################################
- */
+    /*
+    * ################################################
+    * ############# NAMING CONVENTION ################
+    * ################################################
+    * # MethodName_StateUnderTest_ ExpectedBehaviour #
+    * ################################################
+    */
 
     [TestFixture]
     public class ScraperTests
     {
-        private IScraperTest _scraper;
+        private IScraper _scraper;
+        private IRequestHandler _requestHandler;
+        private readonly Mock<IRequestHandler> _moqReqHandler = new Mock<IRequestHandler>();
 
-        private string genericJson =
-            "{\"http://demo.talisaspire.com/\": {\"http://purl.org/vocab/aiiso/schema#name\": [{\"value\": \"Broadminster\",\"type\": \"literal\"}], \"http://purl.org/vocab/aiiso/schema#organizationalUnit\": [{\"value\": \"http://demo.talisaspire.com/schools/bs02\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/div001\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/emps01\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/gold01\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/hum02\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/les02\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/sch001\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/gg100\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/cc101\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/schbed\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/art100\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/schools/inv\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/institutes/mie1\",\"type\": \"uri\"}],\"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\": [{\"value\": \"http://purl.org/vocab/aiiso/schema#Institution\",\"type\": \"uri\"},{\"value\": \"http://purl.org/vocab/aiiso/schema#organizationalUnit\",\"type\": \"uri\"}],\"http://purl.org/vocab/aiiso/schema#knowledgeGrouping\": [{\"value\": \"http://demo.talisaspire.com/subjects/tadc101\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/courses/hum325\",\"type\": \"uri\"},{\"value\": \"http://demo.talisaspire.com/courses/chm174\",\"type\": \"uri\"}],\"http://purl.org/vocab/aiiso/schema#code\": [{\"value\": \"INSTITUTION\",\"type\": \"literal\"}]}}";   
+        private const string GenericJson = "{\"http://demo.talisaspire.com/\": {\"http://purl.org/vocab/aiiso/schema#name\": [{\"value\": \"Broadminster\",\"type\": \"literal\"}]}}";
+
+        private readonly NavItem _generciNavItem = new NavItem { Items = new Items { Name = new[] { new Element { Type = "literal", Value = "Broadminster" } } } };
 
         [SetUp]
         public void SetUp()
         {
-            _scraper = new ScraperTest();
+            _requestHandler = _moqReqHandler.Object;
+            _scraper = new Scraper(_requestHandler) { Cache = new DevNullCacheProvider() };
         }
 
         [Test]
-        public void FetchJson_InjhectedJsonStringReturned_ReturnsTrue()
+        public void FetchItems_ValidUri_ReturnsExpectedStringJsonObject()
         {
-            _scraper.Json = genericJson;
-
-            Assert.AreEqual(_scraper.FetchJson(), genericJson);
+            _moqReqHandler.Setup(m => m.FetchJson(It.IsAny<Uri>())).Returns(GenericJson);
+            Assert.AreEqual(_scraper.FetchItems("http://testuri.com").Items.Name.First().Value, _generciNavItem.Items.Name.First().Value);
         }
 
+        [Test]
+        public void FetchItems_InValidUri_ThrowsUriFormatException()
+        {
+            _moqReqHandler.Setup(m => m.FetchJson(It.IsAny<Uri>())).Returns(GenericJson);
+            Assert.Throws<UriFormatException>(() => _scraper.FetchItems("InvalidUri"));
+        }
+
+        [Test]
+        public void FetchItemsAsync_ValidUri_ReturnsExpectedStringJsonObject()
+        {
+            _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<Uri>())).Returns(Task.FromResult(GenericJson));
+            Assert.AreEqual(_scraper.FetchItems("http://testuri.com").Items.Name.First().Value, _generciNavItem.Items.Name.First().Value);
+        }
+
+        [Test]
+        public void FetchItemsAsync_InValidUri_ThrowsUriFormatException()
+        {
+            _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<Uri>())).Returns(Task.FromResult(GenericJson));
+            Assert.Throws<UriFormatException>(() => _scraper.FetchItemsAsync("InvalidUri"));
+        }
+        /*
         [Test]
         public void FetchSchools_JsonParsedIntoSchoolObject_SchoolObjectNotNull()
         {
@@ -108,7 +85,7 @@ namespace TalisScrapeTest.Tests
             _scraper.Json = genericJson;//"{\"22\":[{\"Value\":\"val1\",\"Type\":\"val2\"}]}";
 
             Assert.NotNull(_scraper.FetchItems("dsfds"));
-        }
+        }*/
 
 
         [TearDown]
