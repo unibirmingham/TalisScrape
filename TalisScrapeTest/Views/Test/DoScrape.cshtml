@@ -4,46 +4,29 @@
     ViewBag.Title = "Index";
 }
 
-@if (ViewBag.ParseTest != null)
-{
-    @ViewBag.ParseTest.Count
-}
-@if (Model == null || Model.Items == null)
-{
-    <div>Generic error message</div>
-    <a href="\">Home</a>
-}
-else
-{
-    <h4>Organizational Unit</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.OrganizationalUnit, new ViewDataDictionary { {"Browsable", "true"}})
+<script src="~/Scripts/jquery-1.10.2.min.js" type="text/javascript"></script>
+<script src="~/Scripts/jquery.signalR-2.2.0.min.js" type="text/javascript"></script>
+<script src="~/signalr/hubs" type="text/javascript"></script>
 
-    <h4>Code</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.Code, new ViewDataDictionary())
+<script>
+    $(function() {
+        var test = $.connection.ScrapeHub;
 
-    <h4>Description</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.Description, new ViewDataDictionary())
+        /*  test.client.doMessage = function (message) {
+            alert(message);
+        };
+        */
 
-    <h4>Name</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.Name, new ViewDataDictionary())
+        $.connection.hub.start().done(function() {
 
-    <h4>Type</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.Type, new ViewDataDictionary())
 
-    <h4>Knowledge Grouping</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.KnowledgeGrouping, new ViewDataDictionary { { "Browsable", "true" } })
+        });
+    });
+</script>
 
-    <h4>Part Of</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.PartOf, new ViewDataDictionary { { "Browsable", "true" } })
+<button id="btnTestA">tester A</button>
+<button id="btnTestB">tester B</button><br/>
 
-    <h4>Uses List</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.UsesList, new ViewDataDictionary { { "Browsable", "true" } })
 
-    <h4>Anticipated Student Numbers</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.AnticipatedStudentNumbers, new ViewDataDictionary())
-
-    <h4>Contains</h4>
-    @Html.Partial("_elementViewTemplate", Model.Items.Contains, new ViewDataDictionary { { "Browsable", "true" } })
-
-    <a href="\">Home</a>
-}
+<button id="btnGroupA">Join Group A</button><button id="btnLeaveGroupA" style="display: none;">Leave Group A</button><br/>
+<button id="btnGroupB">Join Group B</button><button id="btnLeaveGroupB" style="display: none;">Leave Group B</button>

@@ -55,7 +55,7 @@ namespace TalisScrapeTest.Controllers
         
         public async Task<ActionResult> DoScrape(string id)
         {
-            var name = id ?? "http://demo.talisaspire.com/index.json";
+           /* var name = id ?? "http://demo.talisaspire.com/index.json";
 
             _scraper.ScrapeStarted += ScraperOnScrapeStarted;
             _scraper.ScrapeEnded += ScraperOnScrapeEnded;
@@ -66,7 +66,7 @@ namespace TalisScrapeTest.Controllers
             _scraper.ScrapeStarted -= ScraperOnScrapeStarted;
             _scraper.ScrapeEnded -= ScraperOnScrapeEnded;
             _scraper.ResourceScraped -= ScraperOnResourceScraped;
-            ViewBag.ParseTest = parseTest;
+            ViewBag.ParseTest = parseTest;*/
 
             return View(new NavItem());
         }
