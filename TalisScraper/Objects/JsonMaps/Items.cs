@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace TalisScraper.Objects
+namespace TalisScraper.Objects.JsonMaps
 {
     [DataContract]
     public class Items

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace TalisScraper.Interfaces
 {
     public interface IRequestHandler
     {
-        Task<string> FetchJsonAsync(Uri uri);
-        string FetchJson(Uri uri);
+        Task<string> FetchJsonAsync(string uri);
+        string FetchJson(string uri);
     }
 }

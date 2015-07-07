@@ -3,3 +3,12 @@
 2015-07-06 11:13:36.2391|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
 2015-07-06 11:19:21.3329|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
 2015-07-06 12:33:41.1617|ERROR|TalisScraper.Scraper|Scraper.ParseTest: Could not initiate scrape. The root node address was empty.
+2015-07-07 10:10:43.6646|ERROR|TalisScraper.WebClientRequestHandler|System.Net.WebException: The remote server returned an error: (406) Not Acceptable.
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.WebClient.GetWebResponse(WebRequest request, IAsyncResult result)
+   at System.Net.WebClient.DownloadBitsResponseCallback(IAsyncResult result)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1.ConfiguredTaskAwaiter.GetResult()
+   at TalisScraper.WebClientRequestHandler.<FetchJsonAsync>d__0.MoveNext() in c:\Development\TalisScrapeTest\TalisScraper\WebClientRequestHandler.cs:line 29

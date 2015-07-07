@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -12,16 +13,20 @@ using NLog;
 using TalisScraper.Enums;
 using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
+using TalisScraper.Objects.JsonMaps;
 
-
+//Make internals visible to testing framework
+#if DEBUG
+[assembly: InternalsVisibleTo("TalisScrapeTest.Tests")]
+#endif
 namespace TalisScraper
 {
-    public class Scraper : IScraper
+    public class JsonScraper : IScraper
     {
         private const string RootRegex = "\"([^\"]+)\"";
         private readonly IRequestHandler _requestHandler;
 
-        public Scraper(IRequestHandler requestHandler)
+        public JsonScraper(IRequestHandler requestHandler)
         {
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.DefaultConnectionLimit = 300;
@@ -45,7 +50,7 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal async Task<string> FetchJsonAsync(string uri)
         {
-            return await _requestHandler.FetchJsonAsync(new Uri(uri));
+            return await _requestHandler.FetchJsonAsync(uri).ConfigureAwait(false);
         }
 
         internal async Task<NavItem> FetchItemsInternalAsync(string uri)
@@ -55,10 +60,11 @@ namespace TalisScraper
             if (basObj == null)
             {
 
-                var json = await FetchJsonAsync(uri);
+                var json = await FetchJsonAsync(uri).ConfigureAwait(false);
 
                 if (string.IsNullOrEmpty(json))
                     return null;
+
                 var replaceRootRegex = new Regex(RootRegex);
 
                 var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
@@ -80,10 +86,10 @@ namespace TalisScraper
             return basObj;
         }
 
-        public async Task<NavItem> FetchItemsAsync(string uri)
+        public async Task<NavItem> FetchNavItemAsync(string uri)
         {
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
-            var items = await FetchItemsInternalAsync(uri);
+            var items = await FetchItemsInternalAsync(uri).ConfigureAwait(false);
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
             return items;
@@ -92,23 +98,23 @@ namespace TalisScraper
         private async Task RecParseAsync(string loc, List<ReadingList> list)
         {
            // await Task.Yield();
-            var items = await FetchItemsAsync(loc);
+            var items = await FetchItemsInternalAsync(loc).ConfigureAwait(false);
 
             if (items != null)
             {
                 foreach (var ou in items.Items.OrganizationalUnit ?? new Element[] {})
                 {
-                    await RecParseAsync(string.Format("{0}.json", ou.Value), list);
+                    await RecParseAsync(string.Format("{0}.json", ou.Value), list).ConfigureAwait(false);
                 }
 
                 foreach (var ou in items.Items.KnowledgeGrouping ?? new Element[] { })
                 {
-                    await RecParseAsync(string.Format("{0}.json", ou.Value), list);
+                    await RecParseAsync(string.Format("{0}.json", ou.Value), list).ConfigureAwait(false);
                 }
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList {Uri = n.Value}));
+                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList {Uri = n.Value, ParentItem = items}));
                 }
             }
         }
@@ -125,7 +131,7 @@ namespace TalisScraper
 
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
 
-            await RecParseAsync(root, lists);
+            await RecParseAsync(root, lists).ConfigureAwait(false);
 
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
@@ -141,7 +147,7 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal string FetchJson(string uri)
         {
-            return _requestHandler.FetchJson(new Uri(uri));
+            return _requestHandler.FetchJson(uri);
         }
 
         /// <summary>
@@ -178,7 +184,7 @@ namespace TalisScraper
             return basObj;
         }
 
-        public NavItem FetchItems(string uri)
+        public NavItem FetchNavItem(string uri)
         {
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
             var items = FetchItemsInternal(uri);
@@ -205,7 +211,7 @@ namespace TalisScraper
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList { Uri = n.Value }));
+                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList { Uri = n.Value, ParentItem = items}));
                 }
             }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TalisScraper.Events.Args;
 using TalisScraper.Objects;
+using TalisScraper.Objects.JsonMaps;
 
 namespace TalisScraper.Interfaces
 {
@@ -29,7 +30,7 @@ namespace TalisScraper.Interfaces
         /// </summary>
         /// <param name="uri">A uri to the json data to be parsed</param>
         /// <returns>A base type object</returns>
-        Task<NavItem> FetchItemsAsync(string uri);
+        Task<NavItem> FetchNavItemAsync(string uri);
         /// <summary>
         /// Fetches all reading lists found recursively from the specified uri using async
         /// </summary>
@@ -42,7 +43,7 @@ namespace TalisScraper.Interfaces
         /// </summary>
         /// <param name="uri">A uri to the json data to be parsed</param>
         /// <returns>A base type object</returns>
-        NavItem FetchItems(string uri);
+        NavItem FetchNavItem(string uri);
         /// <summary>
         /// Fetches all reading lists found recursively from the specified uri
         /// </summary>

@@ -21,7 +21,7 @@ namespace TalisScrapeTest
 
             Container.Register<ICache>(new DevNullCacheProvider());
             Container.Register<IRequestHandler>(new WebClientRequestHandler());
-            Container.Register<IScraper>(new Scraper(Container.Resolve<IRequestHandler>())
+            Container.Register<IScraper>(new JsonScraper(Container.Resolve<IRequestHandler>())
             {
                 Cache = Container.Resolve<ICache>(),
             });
