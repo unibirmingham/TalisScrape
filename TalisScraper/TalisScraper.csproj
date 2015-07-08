@@ -53,6 +53,7 @@
     <Compile Include="Objects\JsonMaps\NavItem.cs" />
     <Compile Include="Objects\ReadingList.cs" />
     <Compile Include="JsonScraper.cs" />
+    <Compile Include="Objects\ScrapeReport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WebClientRequestHandler.cs" />
   </ItemGroup>

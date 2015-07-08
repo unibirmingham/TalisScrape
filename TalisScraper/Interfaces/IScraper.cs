@@ -36,7 +36,7 @@ namespace TalisScraper.Interfaces
         /// </summary>
         /// <param name="root">A uri to the json data to be scraped</param>
         /// <returns>A collection of reading lists</returns>
-        Task<IEnumerable<ReadingList>> ScrapeReadingListsAsync(string root);
+        Task<IEnumerable<string>> ScrapeReadingListsAsync(string root);
 
         /// <summary>
         /// Fetches Base type navigation item parsed from json located at the specified uri
@@ -49,6 +49,15 @@ namespace TalisScraper.Interfaces
         /// </summary>
         /// <param name="root">A uri to the json data to be scraped</param>
         /// <returns>A collection of reading lists</returns>
-        IEnumerable<ReadingList> ScrapeReadingLists(string root);
+        IEnumerable<string> ScrapeReadingLists(string root);
+
+        IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists);
+
+
+        /// <summary>
+        /// Fetchs a report detailing statistics of the last scrape done
+        /// </summary>
+        /// <returns>A scrape report object</returns>
+        ScrapeReport FetchScrapeReport();
     }
 }

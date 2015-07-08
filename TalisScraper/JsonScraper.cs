@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -21,10 +23,13 @@ using TalisScraper.Objects.JsonMaps;
 #endif
 namespace TalisScraper
 {
+    //TODO: have a scrape options class for configuration?
     public class JsonScraper : IScraper
     {
         private const string RootRegex = "\"([^\"]+)\"";
         private readonly IRequestHandler _requestHandler;
+
+        private ScrapeReport _scrapeReport = null;
 
         public JsonScraper(IRequestHandler requestHandler)
         {
@@ -50,7 +55,15 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal async Task<string> FetchJsonAsync(string uri)
         {
-            return await _requestHandler.FetchJsonAsync(uri).ConfigureAwait(false);
+            var json = await _requestHandler.FetchJsonAsync(uri).ConfigureAwait(false);
+
+            if (string.IsNullOrEmpty(json) && _scrapeReport != null)
+                _scrapeReport.FailedScrapes.Add(uri);
+
+            if (_scrapeReport != null)
+                _scrapeReport.TotalRequestsMade++;
+
+            return json;
         }
 
         internal async Task<NavItem> FetchItemsInternalAsync(string uri)
@@ -95,7 +108,7 @@ namespace TalisScraper
             return items;
         }
 
-        private async Task RecParseAsync(string loc, List<ReadingList> list)
+        private async Task RecParseAsync(string loc, List<string> list)
         {
            // await Task.Yield();
             var items = await FetchItemsInternalAsync(loc).ConfigureAwait(false);
@@ -114,12 +127,12 @@ namespace TalisScraper
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList {Uri = n.Value, ParentItem = items}));
+                    list.AddRange(items.Items.UsesList.Select(n => n.Value));
                 }
             }
         }
 
-        public async Task<IEnumerable<ReadingList>> ScrapeReadingListsAsync(string root)
+        public async Task<IEnumerable<string>> ScrapeReadingListsAsync(string root)
         {
             if (string.IsNullOrEmpty(root))
             {
@@ -127,11 +140,20 @@ namespace TalisScraper
                 return null;
             }
 
-            var lists = new List<ReadingList>();
+            var lists = new List<string>();
+            var stopwatch = new Stopwatch();
+            _scrapeReport = new ScrapeReport();
 
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
 
+            _scrapeReport.ScrapeStarted = DateTime.Now;
+
+            stopwatch.Start();
             await RecParseAsync(root, lists).ConfigureAwait(false);
+            stopwatch.Stop();
+
+            _scrapeReport.ScrapeEnded = DateTime.Now;
+            _scrapeReport.TimeTaken = stopwatch.Elapsed;
 
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
@@ -147,7 +169,15 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal string FetchJson(string uri)
         {
-            return _requestHandler.FetchJson(uri);
+            var json = _requestHandler.FetchJson(uri);
+
+            if (string.IsNullOrEmpty(json) && _scrapeReport != null)
+                _scrapeReport.FailedScrapes.Add(uri);
+
+            if (_scrapeReport != null)
+                _scrapeReport.TotalRequestsMade++;
+
+            return json;
         }
 
         /// <summary>
@@ -161,9 +191,6 @@ namespace TalisScraper
             {
                 var json = FetchJson(uri);
 
-                if (string.IsNullOrEmpty(json))
-                    return null;
-
                 var replaceRootRegex = new Regex(RootRegex);
 
                 var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
@@ -175,9 +202,13 @@ namespace TalisScraper
                     Cache.PutItem(basObj, uri);
                     if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
                 }
+
             }
             else
             {
+                if (_scrapeReport != null)
+                    _scrapeReport.TotalCacheRequestsMade++;
+
                 if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri, true));
             }
 
@@ -193,7 +224,7 @@ namespace TalisScraper
             return items;
         }
 
-        private void RecParse(string loc, ref List<ReadingList> list)
+        private void RecParse(string loc, ref List<string> list)
         {
             var items = FetchItemsInternal(loc);
 
@@ -211,13 +242,13 @@ namespace TalisScraper
 
                 if (items.Items.UsesList.HasContent())
                 {
-                    list.AddRange(items.Items.UsesList.Select(n => new ReadingList { Uri = n.Value, ParentItem = items}));
+                    list.AddRange(items.Items.UsesList.Select(n =>  n.Value));
                 }
             }
 
         }
 
-        public IEnumerable<ReadingList> ScrapeReadingLists(string root)
+        public IEnumerable<string> ScrapeReadingLists(string root)
         {
             if (string.IsNullOrEmpty(root))
             {
@@ -225,14 +256,114 @@ namespace TalisScraper
                 return null;
             }
 
-            var lists = new List<ReadingList>();
+            var lists = new List<string>();
+            var stopwatch = new Stopwatch();
+            _scrapeReport = new ScrapeReport();
 
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+
+            _scrapeReport.ScrapeStarted = DateTime.Now;
+
+            stopwatch.Start();
             RecParse(root, ref lists);
+            stopwatch.Stop();
+
+            _scrapeReport.ScrapeEnded = DateTime.Now;
+            _scrapeReport.TimeTaken = stopwatch.Elapsed;
+
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
             return lists;
         }
+
+
+        public IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists)
+        {//scrape lists from passed in uri collection of lists
+            
+            if (!readingLists.HasContent())
+            {
+                Log.Error("Attempted to populate reading lists, but passed in list object was null.");
+                return null;
+            }
+
+            //TODO: need to fire resourceScraped event
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
+            _scrapeReport = new ScrapeReport();
+
+            var readingListCollection = new Collection<ReadingList>();
+            var stopWatch = new Stopwatch();
+
+            _scrapeReport.ScrapeStarted = DateTime.Now;
+
+            stopWatch.Start();
+            foreach (var item in readingLists)
+            {
+                var uri = string.Format("{0}.json", item);
+
+                var readingListNavObj = FetchItemsInternal(uri);
+
+                if (readingListNavObj == null)
+                {
+                    Log.Error("Reading list from uri:{0} could not be scraped.", uri);
+                    continue;
+                }
+
+                readingListCollection.Add(new ReadingList { Uri = uri, ListInfo = readingListNavObj});
+                
+            }
+
+            if (readingListCollection.HasContent())
+            {//fetch books from discovered lists and add them to the relevant list
+                foreach (var rlItem in readingListCollection)
+                {
+                    foreach (var rlItemBook in rlItem.ListInfo.Items.Contains)
+                    {
+                        if (rlItemBook.Value.Contains("/items/"))
+                        {
+                            var json = FetchJson(rlItem.Uri);
+
+                            //var getNavItem = FetchItemsInternal(string.Format("{0}.json", element.Value));
+
+                            //if (getNavItem != null)
+                              //  bookItems.Add(getNavItem);
+                        }
+                        
+                    }
+                    
+                }
+            }
+            stopWatch.Start();
+
+            _scrapeReport.ScrapeEnded = DateTime.Now;
+            _scrapeReport.TimeTaken = stopWatch.Elapsed;
+
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.Books));
+            /*
+             var bookItems = new Collection<NavItem>();
+
+            if (test != null && test.Items.Contains.HasContent())
+            {
+                foreach (var element in test.Items.Contains)
+                {
+                    //We only want items, ignore sections etc
+                    if (element.Value.Contains("/items/"))
+                    {
+                        var getNavItem = FetchItemsInternal(string.Format("{0}.json", element.Value));
+
+                        if(getNavItem != null)
+                            bookItems.Add(getNavItem);
+                    }
+                }
+            }*/
+
+            return readingListCollection;
+        }
+
+        public ScrapeReport FetchScrapeReport()
+        {
+            return _scrapeReport;
+        }
+
         #endregion
     }
 }

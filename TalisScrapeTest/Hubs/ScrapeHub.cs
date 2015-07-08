@@ -14,8 +14,8 @@ namespace TalisScrapeTest.Hubs
         public HashSet<string> ConnectionIds { get; set; }
     }
 
-    [HubName("ScrapeHub")]
-    public class MyHub1 : Hub
+    //[HubName("ScrapeHub")]
+    public class ScrapeHub : Hub
     {
         private static readonly ConcurrentDictionary<string, User> Users
     = new ConcurrentDictionary<string, User>(StringComparer.InvariantCultureIgnoreCase);
@@ -104,6 +104,8 @@ namespace TalisScrapeTest.Hubs
         }
 
 
+
+
         public IEnumerable<string> GetConnectedUsers()
         {
 
@@ -119,21 +121,15 @@ namespace TalisScrapeTest.Hubs
             }).Select(x => x.Key);
         }
 
-
-        public void MessageTestA(string message)
-        {
-            Clients.Group("GroupA").doMessage(message);
-        }
-
         public async Task JoinGroup(string group)
         {
-            await Groups.Add(Context.ConnectionId, group);
+            await Groups.Add(Context.ConnectionId, group).ConfigureAwait(false);
             Clients.Group(group).doMessage("Joined Group:" + group);
         }
 
         public async Task LeaveGroup(string group)
         {
-            await Groups.Remove(Context.ConnectionId, group);
+            await Groups.Remove(Context.ConnectionId, group).ConfigureAwait(false);
             Clients.Group(group).doMessage("Left Group:" + group);
         }
     }

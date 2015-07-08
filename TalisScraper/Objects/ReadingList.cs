@@ -6,7 +6,7 @@ namespace TalisScraper.Objects
     public class ReadingList
     {
         public string Uri { get; set; }
-        public NavItem ParentItem { get; set; }
+        public NavItem ListInfo { get; set; }
 
         public IEnumerable<Book> Books { get; set; } 
     }
