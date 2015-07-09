@@ -24,8 +24,12 @@ namespace TalisScraper.Interfaces
         /// Event fired when scrape ends
         /// </summary>
         event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
-        
         /// <summary>
+        /// Event fired when scrape is forcibly stopped
+        /// </summary>
+        event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
+
+            /// <summary>
         /// Fetches Base type navigation item parsed from json located at the specified uri using async
         /// </summary>
         /// <param name="uri">A uri to the json data to be parsed</param>
@@ -53,6 +57,11 @@ namespace TalisScraper.Interfaces
 
         IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists);
 
+        /// <summary>
+        /// Force the scrape to cancel
+        /// </summary>
+        /// <returns></returns>
+        bool CancelScrape();
 
         /// <summary>
         /// Fetchs a report detailing statistics of the last scrape done

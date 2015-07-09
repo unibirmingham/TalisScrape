@@ -11,11 +11,14 @@ using Newtonsoft.Json;
 using TalisScraper.Objects;
 using Cache;
 using Extensions;
+using Newtonsoft.Json.Linq;
 using NLog;
 using TalisScraper.Enums;
 using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
 using TalisScraper.Objects.JsonMaps;
+
+//TODO: should we lock per scrape, so if another scrape is initiated before current scrap[e ends, we deny it? Also a 'stop scrape' function?
 
 //Make internals visible to testing framework
 #if DEBUG
@@ -29,15 +32,18 @@ namespace TalisScraper
         private const string RootRegex = "\"([^\"]+)\"";
         private readonly IRequestHandler _requestHandler;
 
+        private bool _scrapeCancelled;
+
         private ScrapeReport _scrapeReport = null;
 
         public JsonScraper(IRequestHandler requestHandler)
         {
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.DefaultConnectionLimit = 300;
+  
 
             Log = LogManager.GetCurrentClassLogger();//todo: inject this in?
             _requestHandler = requestHandler;
+
+            
         }
 
         public ILogger Log { get; set; }
@@ -45,6 +51,7 @@ namespace TalisScraper
         
         #region Async Functions
         public event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
+        public event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
         public event EventHandler<ScrapeStartedEventArgs> ScrapeStarted;
         public event EventHandler<ResourceScrapedEventArgs> ResourceScraped;
 
@@ -316,20 +323,31 @@ namespace TalisScraper
             {//fetch books from discovered lists and add them to the relevant list
                 foreach (var rlItem in readingListCollection)
                 {
-                    foreach (var rlItemBook in rlItem.ListInfo.Items.Contains)
+                    foreach (var rlItemList in rlItem.ListInfo.Items.Contains)
                     {
-                        if (rlItemBook.Value.Contains("/items/"))
+                        if (rlItemList.Value.Contains("/items/"))
                         {
-                            var json = FetchJson(rlItem.Uri);
+                            var getbookItems = FetchItemsInternal(rlItem.Uri);
 
-                            //var getNavItem = FetchItemsInternal(string.Format("{0}.json", element.Value));
+                            if (getbookItems != null && getbookItems.Items.Contains.HasContent())
+                            {//scrape individual book info
+                                foreach (var book in getbookItems.Items.Contains)
+                                {
+                                    if (book.Value.Contains("/items/"))
+                                    {
+                                        var bookItem = FetchJson(string.Format("{0}.json", book.Value));
 
-                            //if (getNavItem != null)
-                              //  bookItems.Add(getNavItem);
+                                        var tttt = JObject.Parse(bookItem);
+
+
+                                        var test = tttt.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+
+                                        
+                                    }
+                                }
+                            }
                         }
-                        
                     }
-                    
                 }
             }
             stopWatch.Start();
@@ -357,6 +375,11 @@ namespace TalisScraper
             }*/
 
             return readingListCollection;
+        }
+
+        public bool CancelScrape()
+        {
+            throw new NotImplementedException();
         }
 
         public ScrapeReport FetchScrapeReport()

@@ -41,4 +41,14 @@ namespace TalisScraper.Events.Args
             Ended = DateTime.Now;
         }
     }
+
+    public class ScrapeCancelledEventArgs : EventArgs
+    {
+        public DateTime Ended { get; internal set; }
+
+        public ScrapeCancelledEventArgs()
+        {
+            Ended = DateTime.Now;
+        }
+    }
 }

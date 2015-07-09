@@ -1,17 +1,23 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using TalisScraper.Interfaces;
+using TalisScraper.Objects;
 
 namespace TalisScraper
 {
     public class WebClientRequestHandler : IRequestHandler
     {
-        public WebClientRequestHandler()
+        private readonly ScrapeConfig _scrapeConfig;
+
+        public WebClientRequestHandler(ScrapeConfig config = null)
         {
             Log = LogManager.GetCurrentClassLogger();
+
+            _scrapeConfig = config;
         }
 
         public ILogger Log { get; set; }
@@ -24,6 +30,10 @@ namespace TalisScraper
                // wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.121 Safari/535.2";
     
                 var json = string.Empty;
+
+                //if throttle has been configured, delay the function for specified time
+                if (_scrapeConfig != null && _scrapeConfig.RequestThrottle > TimeSpan.Zero)
+                    await Task.Delay(_scrapeConfig.RequestThrottle);
 
                 try
                 {
@@ -51,6 +61,9 @@ namespace TalisScraper
             using (var wc = new WebClient())
             {
                 var json = string.Empty;
+
+                if (_scrapeConfig != null && _scrapeConfig.RequestThrottle > TimeSpan.Zero)
+                    Thread.Sleep(_scrapeConfig.RequestThrottle);
 
                 try
                 {
