@@ -302,8 +302,7 @@ namespace TalisScraper
                 return null;
             }
 
-            if (_scrapeCancelled)
-                return null;
+            _scrapeCancelled = false;
 
             //TODO: need to fire resourceScraped event
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
@@ -335,8 +334,10 @@ namespace TalisScraper
             {//fetch books from discovered lists and add them to the relevant list
                 foreach (var rlItem in readingListCollection)
                 {
+                    if (_scrapeCancelled) return null;
                     foreach (var rlItemList in rlItem.ListInfo.Items.Contains)
                     {
+                        if (_scrapeCancelled) return null;
                         if (rlItemList.Value.Contains("/items/"))
                         {
                             var getbookItems = FetchItemsInternal(rlItem.Uri);
@@ -345,16 +346,18 @@ namespace TalisScraper
                             {//scrape individual book info
                                 foreach (var book in getbookItems.Items.Contains)
                                 {
+                                    if (_scrapeCancelled) return null;
                                     if (book.Value.Contains("/items/"))
                                     {
                                         var bookItem = FetchJson(string.Format("{0}.json", book.Value));
 
-                                        var tttt = JObject.Parse(bookItem);
+                                        if (!string.IsNullOrEmpty(bookItem))
+                                        {
+                                            var bookObj = ParseBookInfoFromJson(bookItem);
 
-
-                                        var test = tttt.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
-
-                                        
+                                            if (bookObj != null)
+                                                rlItem.Books.Add(bookObj);
+                                        }
                                     }
                                 }
                             }
@@ -368,25 +371,19 @@ namespace TalisScraper
             _scrapeReport.TimeTaken = stopWatch.Elapsed;
 
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.Books));
-            /*
-             var bookItems = new Collection<NavItem>();
-
-            if (test != null && test.Items.Contains.HasContent())
-            {
-                foreach (var element in test.Items.Contains)
-                {
-                    //We only want items, ignore sections etc
-                    if (element.Value.Contains("/items/"))
-                    {
-                        var getNavItem = FetchItemsInternal(string.Format("{0}.json", element.Value));
-
-                        if(getNavItem != null)
-                            bookItems.Add(getNavItem);
-                    }
-                }
-            }*/
 
             return readingListCollection;
+        }
+
+        //TODO: Flesh this out!
+        private static Book ParseBookInfoFromJson(string json)
+        {
+            var tttt = JObject.Parse(json);
+
+
+            var test = tttt.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+
+            return new Book();
         }
 
         #endregion
