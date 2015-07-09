@@ -32,7 +32,7 @@ namespace TalisScraper
         private const string RootRegex = "\"([^\"]+)\"";
         private readonly IRequestHandler _requestHandler;
 
-        private bool _scrapeCancelled;
+        private volatile bool _scrapeCancelled;
 
         private ScrapeReport _scrapeReport = null;
 
@@ -108,6 +108,7 @@ namespace TalisScraper
 
         public async Task<NavItem> FetchNavItemAsync(string uri)
         {
+            _scrapeCancelled = false;
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
             var items = await FetchItemsInternalAsync(uri).ConfigureAwait(false);
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
@@ -117,6 +118,9 @@ namespace TalisScraper
 
         private async Task RecParseAsync(string loc, List<string> list)
         {
+            if (_scrapeCancelled)
+                return;
+
            // await Task.Yield();
             var items = await FetchItemsInternalAsync(loc).ConfigureAwait(false);
 
@@ -146,7 +150,7 @@ namespace TalisScraper
                 Log.Error("Scraper.ParseTest: Could not initiate scrape. The root node address was empty.");
                 return null;
             }
-
+            _scrapeCancelled = false;
             var lists = new List<string>();
             var stopwatch = new Stopwatch();
             _scrapeReport = new ScrapeReport();
@@ -224,6 +228,7 @@ namespace TalisScraper
 
         public NavItem FetchNavItem(string uri)
         {
+            _scrapeCancelled = false;
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
             var items = FetchItemsInternal(uri);
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
@@ -233,6 +238,9 @@ namespace TalisScraper
 
         private void RecParse(string loc, ref List<string> list)
         {
+            if (_scrapeCancelled)
+                return;
+
             var items = FetchItemsInternal(loc);
 
             if (items != null)
@@ -263,6 +271,7 @@ namespace TalisScraper
                 return null;
             }
 
+            _scrapeCancelled = false;
             var lists = new List<string>();
             var stopwatch = new Stopwatch();
             _scrapeReport = new ScrapeReport();
@@ -283,7 +292,7 @@ namespace TalisScraper
             return lists;
         }
 
-
+        //todo: how does cancel scrape fit into this? Might pass a prescraped collection in, so can't assume we outright cancel it
         public IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists)
         {//scrape lists from passed in uri collection of lists
             
@@ -292,6 +301,9 @@ namespace TalisScraper
                 Log.Error("Attempted to populate reading lists, but passed in list object was null.");
                 return null;
             }
+
+            if (_scrapeCancelled)
+                return null;
 
             //TODO: need to fire resourceScraped event
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
@@ -377,16 +389,20 @@ namespace TalisScraper
             return readingListCollection;
         }
 
+        #endregion
+
         public bool CancelScrape()
         {
-            throw new NotImplementedException();
+            _scrapeCancelled = true;
+
+            if(ScrapeCancelled != null) ScrapeCancelled(this, new ScrapeCancelledEventArgs());
+
+            return true;
         }
 
         public ScrapeReport FetchScrapeReport()
         {
             return _scrapeReport;
         }
-
-        #endregion
     }
 }

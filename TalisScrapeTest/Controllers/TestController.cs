@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 using System.Web.Services;
 using Extensions;
@@ -42,6 +43,12 @@ namespace TalisScrapeTest.Controllers
            // _log.Info("Scraped: {0} (from cache: {1})", args.URI, args.FromCache);
         }
 
+
+        private void ScraperOnScrapeCancelled(object sender, ScrapeCancelledEventArgs args)
+        {
+            _scrapeHub.Clients.Group("doScrape").doMessage(string.Format("Scraped Cancelled at {0}.", args.Ended));
+        }
+
         public async Task<ActionResult> Index(string id)
         {
             var name = id ?? "http://demo.talisaspire.com/index.json";//"http://aspire.aber.ac.uk/index.json";
@@ -73,6 +80,7 @@ namespace TalisScrapeTest.Controllers
             _scraper.ScrapeStarted += ScraperOnScrapeStarted;
             _scraper.ScrapeEnded += ScraperOnScrapeEnded;
             _scraper.ResourceScraped += ScraperOnResourceScraped;
+            _scraper.ScrapeCancelled += ScraperOnScrapeCancelled;
 
             var lists = await _scraper.ScrapeReadingListsAsync(name).ConfigureAwait(false);//Async();//pass root in here?
 
@@ -92,8 +100,15 @@ namespace TalisScrapeTest.Controllers
             _scraper.ScrapeStarted -= ScraperOnScrapeStarted;
             _scraper.ScrapeEnded -= ScraperOnScrapeEnded;
             _scraper.ResourceScraped -= ScraperOnResourceScraped;
+            _scraper.ScrapeCancelled -= ScraperOnScrapeCancelled;
 
-            var i = 2;
+        }
+
+
+        [WebMethod]
+        public void CancelScrape()
+        {
+            _scraper.CancelScrape();
         }
 
         public ActionResult Index1(string id)

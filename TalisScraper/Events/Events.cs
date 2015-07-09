@@ -1,6 +1,6 @@
-﻿//#######################################################
-//## Delegates and Event Args are defined in this file ##
-//#######################################################
+﻿//#########################################
+//## Event Args are defined in this file ##
+//#########################################
 using System;
 using TalisScraper.Enums;
 
