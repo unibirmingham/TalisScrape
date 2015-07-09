@@ -43,7 +43,7 @@
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Enum.cs" />
+    <Compile Include="Enums.cs" />
     <Compile Include="Events\Events.cs" />
     <Compile Include="Interfaces\IRequestHandler.cs" />
     <Compile Include="Interfaces\IScraper.cs" />

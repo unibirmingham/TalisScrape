@@ -378,10 +378,18 @@ namespace TalisScraper
         //TODO: Flesh this out!
         private static Book ParseBookInfoFromJson(string json)
         {
-            var tttt = JObject.Parse(json);
+            var book = new Book();
+
+            var jObj = JObject.Parse(json);
 
 
-            var test = tttt.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+            var rawOrg = jObj.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+            if (rawOrg.HasValues)
+            {
+                var publisher = JObject.FromObject(rawOrg); //rawOrg["http://xmlns.com/foaf/0.1/name"]["value"];
+                var ttt = publisher.Properties().FirstOrDefault(p => p.Contains("/name"));
+            }
+
 
             return new Book();
         }
