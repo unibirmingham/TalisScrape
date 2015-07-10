@@ -10,14 +10,16 @@ namespace TalisScraper.Objects
         public ScrapeConfig()
         {
             RequestThrottle = TimeSpan.Zero;
-          //  ServicePointManager.Expect100Continue = false;
-           // ServicePointManager.DefaultConnectionLimit = 300;
+            EnableParallelProcessing = false;
+            //  ServicePointManager.Expect100Continue = false;
+            // ServicePointManager.DefaultConnectionLimit = 300;
         }
 
         /// <summary>
         /// Allows the webcrawl to be throttled - this might be needed for apis which only allow n requests per time period
         /// </summary>
         public TimeSpan RequestThrottle { get; set; }
+        public bool EnableParallelProcessing { get; set; }
 
     }
 }

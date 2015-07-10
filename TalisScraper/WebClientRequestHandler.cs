@@ -15,6 +15,9 @@ namespace TalisScraper
 
         public WebClientRequestHandler(ScrapeConfig config = null)
         {
+            ServicePointManager.Expect100Continue = false;
+            ServicePointManager.DefaultConnectionLimit = 300;
+
             Log = LogManager.GetCurrentClassLogger();
 
             _scrapeConfig = config;
