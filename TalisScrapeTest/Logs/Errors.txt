@@ -788,3 +788,13 @@
    at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
    at System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1.ConfiguredTaskAwaiter.GetResult()
    at TalisScraper.WebClientRequestHandler.<FetchJsonAsync>d__0.MoveNext() in c:\Development\TalisScrapeTest\TalisScraper\WebClientRequestHandler.cs:line 41
+2015-07-10 15:37:56.9373|ERROR|TalisScraper.WebClientRequestHandler|System.Net.WebException: The remote server returned an error: (404) Not Found.
+   at System.Net.WebClient.DownloadDataInternal(Uri address, WebRequest& request)
+   at System.Net.WebClient.DownloadString(Uri address)
+   at TalisScraper.WebClientRequestHandler.FetchJson(String uri) in c:\Development\TalisScrapeTest\TalisScraper\WebClientRequestHandler.cs:line 74
+2015-07-10 15:37:56.9613|ERROR|TalisScraper.JsonScraper|Reading list from uri:http://demo.talisaspire.com/lists/F04C897C-D896-F54F-7956-28E8046F9B94.json could not be scraped.
+2015-07-10 15:37:59.0973|ERROR|TalisScraper.WebClientRequestHandler|System.Net.WebException: The remote server returned an error: (404) Not Found.
+   at System.Net.WebClient.DownloadDataInternal(Uri address, WebRequest& request)
+   at System.Net.WebClient.DownloadString(Uri address)
+   at TalisScraper.WebClientRequestHandler.FetchJson(String uri) in c:\Development\TalisScrapeTest\TalisScraper\WebClientRequestHandler.cs:line 74
+2015-07-10 15:37:59.0973|ERROR|TalisScraper.JsonScraper|Reading list from uri:http://demo.talisaspire.com/lists/E8994B3C-37F8-D0E7-AFA7-7E2C860F4B80.json could not be scraped.

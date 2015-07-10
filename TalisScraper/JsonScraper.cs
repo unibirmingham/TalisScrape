@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using TalisScraper.Objects;
 using Cache;
 using Extensions;
+using Newtonsoft.Json.Linq;
 using NLog;
 using TalisScraper.Enums;
 using TalisScraper.Events.Args;
@@ -521,8 +522,6 @@ namespace TalisScraper
             return readingListCollection;
         }
 
-
-
         //todo: how does cancel scrape fit into this? Might pass a prescraped collection in, so can't assume we outright cancel it
         public IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists)
         {//scrape lists from passed in uri collection of lists
@@ -566,20 +565,20 @@ namespace TalisScraper
         //TODO: Flesh this out!
         private static Book ParseBookInfoFromJson(string json)
         {
-            /*var book = new Book();
+            var book = new Book();
 
             var jObj = JObject.Parse(json);
 
 
             var rawOrg = jObj.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+
             if (rawOrg.HasValues)
             {
-                var publisher = JObject.FromObject(rawOrg); //rawOrg["http://xmlns.com/foaf/0.1/name"]["value"];
-                var ttt = publisher.Properties().FirstOrDefault(p => p.Contains("/name"));
+                var org = rawOrg.ToObject<OrganisationItem>();
             }
-            */
 
-            return new Book();
+
+            return book;
         }
 
         #endregion

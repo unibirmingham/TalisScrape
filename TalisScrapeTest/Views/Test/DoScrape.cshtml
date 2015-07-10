@@ -6,7 +6,11 @@
 <button style="margin-top: 50px;" id="Scrape">Scrape</button>
 <button style="margin-top: 50px;" id="CancelScrape">Cancel Scrape</button>
 <div id="Messages" style="width: 80%; height: 400px; overflow-y: scroll;">
-    
+
+</div>
+<br/>
+<div id="Reports" style="width: 80%; height: 400px; overflow-y: scroll;">
+
 </div>
 
 @section FooterScripts
@@ -23,8 +27,13 @@
             $("#Messages").prepend("<p>" + message + "</p>");
         };
 
+        scrapeHub.client.doReport = function (message) {
+            $("#Reports").prepend("<p>" + message + "</p>");
+        };
+
         $.connection.hub.start().done(function () {
             scrapeHub.server.joinGroup('doScrape');
+            scrapeHub.server.joinGroup('scrapeReports');
             console.log("Now connected(" + $.connection.hub.id + ")");
 
         }).fail(function () {

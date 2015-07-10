@@ -88,6 +88,10 @@ namespace TalisScrapeTest.Controllers
 
             var listScrapeReport = _scraper.FetchScrapeReport();
 
+            if (listScrapeReport != null)
+                _scrapeHub.Clients.Group("scrapeReports").doReport(listScrapeReport.ToJson());
+            
+
             ScrapeReport bookScrapeReport;
 
             if (lists.HasContent())
@@ -95,6 +99,9 @@ namespace TalisScrapeTest.Controllers
                 _scraper.PopulateReadingLists(lists);
 
                 bookScrapeReport = _scraper.FetchScrapeReport();
+
+                if (bookScrapeReport != null)
+                    _scrapeHub.Clients.Group("scrapeReports").doReport(bookScrapeReport.ToJson());
             }
 
             _scraper.ScrapeStarted -= ScraperOnScrapeStarted;
