@@ -96,7 +96,7 @@ namespace TalisScrapeTest.Controllers
 
             if (lists.HasContent())
             {
-                _scraper.PopulateReadingLists(lists);
+                var tst =_scraper.PopulateReadingLists(lists);
 
                 bookScrapeReport = _scraper.FetchScrapeReport();
 
@@ -117,6 +117,15 @@ namespace TalisScrapeTest.Controllers
         {
             _scraper.CancelScrape();
         }
+
+
+        public ActionResult JObjTest()
+        {
+            var json = "";
+
+            return View();
+        }
+
 
         public ActionResult Index1(string id)
         {

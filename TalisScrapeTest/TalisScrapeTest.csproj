@@ -164,6 +164,7 @@
     <Content Include="Views\Test\Dynamic.cshtml" />
     <Content Include="Views\Test\Index1.cshtml" />
     <Content Include="Views\Test\DoScrape.cshtml" />
+    <Content Include="Views\Test\JObjTest.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

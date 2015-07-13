@@ -69,6 +69,8 @@ namespace TalisScraper
             if (_scrapeReport != null)
                 _scrapeReport.TotalRequestsMade++;
 
+            if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
+
             return json;
         }
 
@@ -81,25 +83,18 @@ namespace TalisScraper
 
                 var json = await FetchJsonAsync(uri).ConfigureAwait(false);
 
-                if (string.IsNullOrEmpty(json))
-                    return null;
 
-                var replaceRootRegex = new Regex(RootRegex);
-
-                var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
-
-                basObj = JsonConvert.DeserializeObject<NavItem>(finalJson);
+                basObj = NavItemParser(json);
 
                 if (basObj != null)
                 {
-                    if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
-
                     Cache.PutItem(basObj, uri);
                 }
             }
             else
             {
-                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri, true));
+                if (_scrapeReport != null)
+                    _scrapeReport.TotalCacheRequestsMade++;
             }
 
             return basObj;
@@ -237,8 +232,34 @@ namespace TalisScraper
             if (_scrapeReport != null)
                 _scrapeReport.TotalRequestsMade++;
 
+            if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
+
             return json;
         }
+
+
+        private NavItem NavItemParser(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+                return null;
+
+            var replaceRootRegex = new Regex(RootRegex);
+
+            var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
+            NavItem convertedNav = null;
+
+            try
+            {
+                convertedNav = JsonConvert.DeserializeObject<NavItem>(finalJson);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+            }
+
+            return convertedNav;
+        }
+
 
         /// <summary>
         /// Fetches Items, has been made internal so the public Fetch Item func can fire scrape start and stop events for individual items
@@ -251,16 +272,11 @@ namespace TalisScraper
             {
                 var json = FetchJson(uri);
 
-                var replaceRootRegex = new Regex(RootRegex);
-
-                var finalJson = replaceRootRegex.Replace(json, "\"root\"", 1);
-
-                basObj = JsonConvert.DeserializeObject<NavItem>(finalJson);
+                basObj = NavItemParser(json);
 
                 if (basObj != null)
                 {
                     Cache.PutItem(basObj, uri);
-                    if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri));
                 }
 
             }
@@ -268,8 +284,6 @@ namespace TalisScraper
             {
                 if (_scrapeReport != null)
                     _scrapeReport.TotalCacheRequestsMade++;
-
-                if (ResourceScraped != null) ResourceScraped(this, new ResourceScrapedEventArgs(uri, true));
             }
 
             return basObj;
@@ -443,7 +457,7 @@ namespace TalisScraper
 
                                             if (!string.IsNullOrEmpty(bookItem))
                                             {
-                                                var bookObj = ParseBookInfoFromJson(bookItem);
+                                                var bookObj = ParseBookInfoFromJson(item.Value, bookItem);
 
                                                 if (bookObj != null)
                                                     currentList.Books.Add(bookObj);
@@ -506,7 +520,7 @@ namespace TalisScraper
 
                                         if (!string.IsNullOrEmpty(bookItem))
                                         {
-                                            var bookObj = ParseBookInfoFromJson(bookItem);
+                                            var bookObj = ParseBookInfoFromJson(book.Value, bookItem);
 
                                             if (bookObj != null)
                                                 rlItem.Books.Add(bookObj);
@@ -525,7 +539,7 @@ namespace TalisScraper
         //todo: how does cancel scrape fit into this? Might pass a prescraped collection in, so can't assume we outright cancel it
         public IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists)
         {//scrape lists from passed in uri collection of lists
-            
+            _scrapeCancelled = false;
             if (!readingLists.HasContent())
             {
                 Log.Error("Attempted to populate reading lists, but passed in list object was null.");
@@ -557,13 +571,9 @@ namespace TalisScraper
             return readingListsFinal;
         }
 
-     /*   private ReadingList ParallellFetchTest(string uri)
-        {
-            
-        }*/
 
         //TODO: Flesh this out!
-        private static Book ParseBookInfoFromJson(string json)
+        private Book ParseBookInfoFromJson(string uri, string json)
         {
             var book = new Book();
 
@@ -571,10 +581,56 @@ namespace TalisScraper
 
 
             var rawOrg = jObj.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
+            var rawResources = jObj.Properties().Where(p => p.Name.Contains("/resources/") && !p.Name.Contains("/authors"));
 
-            if (rawOrg.HasValues)
+
+
+            try
             {
-                var org = rawOrg.ToObject<OrganisationItem>();
+                if (rawOrg.HasContent())
+                {
+                    foreach (var child in rawOrg.Children())
+                    {
+                        if (child.HasValues && child["http://xmlns.com/foaf/0.1/name"] != null)
+                        {
+                            var childa = JsonConvert.DeserializeObject<Element>(child["http://xmlns.com/foaf/0.1/name"][0].ToString());
+
+                            book.Publisher = childa != null ? childa.Value : string.Empty;
+                        }
+                    }
+                }
+
+                if (rawResources.HasContent())
+                {
+                    foreach (var resource in rawResources)
+                    {
+                        var resJson = resource.ToString();
+
+                        var replaceRootRegex = new Regex(RootRegex);
+
+                        var finalJson = replaceRootRegex.Replace(resJson, "\"root\"", 1);
+
+                        var resourceObj = JsonConvert.DeserializeObject<Resources>("{" + finalJson + "}");
+
+                        if (resourceObj != null && resourceObj.Items != null)
+                        {
+                            if (resourceObj.Items.Title.HasContent())
+                                book.Title += string.Join(", ", resourceObj.Items.Title.Select(n => n.Value));
+
+                            book.URL = uri;
+                        }
+                    }
+
+                }
+
+
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+
+                book = null;
             }
 
 

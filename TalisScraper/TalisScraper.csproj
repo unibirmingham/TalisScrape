@@ -48,7 +48,8 @@
     <Compile Include="Interfaces\IRequestHandler.cs" />
     <Compile Include="Interfaces\IScraper.cs" />
     <Compile Include="Objects\Book.cs" />
-    <Compile Include="Objects\JsonMaps\OrganisationItem.cs" />
+    <Compile Include="Objects\JsonMaps\Resources.cs" />
+    <Compile Include="Objects\JsonMaps\ResourceItems.cs" />
     <Compile Include="Objects\JsonMaps\Items.cs" />
     <Compile Include="Objects\JsonMaps\NavItem.cs" />
     <Compile Include="Objects\ReadingList.cs" />
