@@ -41,13 +41,17 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums.cs" />
     <Compile Include="Events\Events.cs" />
+    <Compile Include="Interfaces\IExportHandler.cs" />
     <Compile Include="Interfaces\IRequestHandler.cs" />
     <Compile Include="Interfaces\IScraper.cs" />
     <Compile Include="Objects\Book.cs" />
+    <Compile Include="Objects\Handlers\OaiPmhXmlHandler.cs" />
     <Compile Include="Objects\JsonMaps\Resources.cs" />
     <Compile Include="Objects\JsonMaps\ResourceItems.cs" />
     <Compile Include="Objects\JsonMaps\Items.cs" />
@@ -56,8 +60,9 @@
     <Compile Include="JsonScraper.cs" />
     <Compile Include="Objects\ScrapeConfig.cs" />
     <Compile Include="Objects\ScrapeReport.cs" />
+    <Compile Include="Objects\Xsd\OAI-PMH.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WebClientRequestHandler.cs" />
+    <Compile Include="Objects\Handlers\WebClientRequestHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="nlog.config">

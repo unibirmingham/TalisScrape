@@ -71,28 +71,28 @@ namespace TalisScrapeTest.Tests
         public async Task FetchJsonAsync_ValidUriValidEndPoint_ReturnsExpectedJson()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).ReturnsAsync(GenericJson);
-            Assert.AreEqual(await _requestHandler.FetchJsonAsync("http://testuri.com").ConfigureAwait(false), GenericJson);
+            Assert.AreEqual(await _requestHandler.FetchJsonAsync("http://testuri.com"), GenericJson);
         }
 
         [Test]
         public async Task FetchJsonAsync_ValidUriInValidEndPoint_ThrowsWebException()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).Throws<WebException>();
-            Assert.Throws<WebException>(async() => await _requestHandler.FetchJsonAsync("http://invalidEndpoint.com").ConfigureAwait(false));
+            Assert.Throws<WebException>(async() => await _requestHandler.FetchJsonAsync("http://invalidEndpoint.com"));
         }
 
         [Test]
         public async Task FetchJsonAsync_ValidUriNoneJsonResponse_ThrowsInvalidDataException()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).Throws<InvalidDataException>();
-            Assert.Throws<InvalidDataException>(async () => await _requestHandler.FetchJsonAsync("http://noneJsonEndpoint.com").ConfigureAwait(false));
+            Assert.Throws<InvalidDataException>(async () => await _requestHandler.FetchJsonAsync("http://noneJsonEndpoint.com"));
         }
 
         [Test]
         public async Task FetchJsonAsync_InValidUri_ThrowsUriFormatException()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).Throws<UriFormatException>();
-            Assert.Throws<UriFormatException>(async () => await _requestHandler.FetchJsonAsync("InvalidUri").ConfigureAwait(false));
+            Assert.Throws<UriFormatException>(async () => await _requestHandler.FetchJsonAsync("InvalidUri"));
         }
 
         #endregion

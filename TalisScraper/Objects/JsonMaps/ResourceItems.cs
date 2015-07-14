@@ -26,5 +26,11 @@ namespace TalisScraper.Objects.JsonMaps
 
         [DataMember(Name = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")]
         public IEnumerable<Element> Type { get; set; }
+
+        [DataMember(Name = "http://purl.org/dc/terms/source")]
+        public IEnumerable<Element> Source { get; set; }
+
+
+        //public IEnumerable<Element> Authors { get; set; } 
     }
 }

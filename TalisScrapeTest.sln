@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cache", "Cache\Cache.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Extensions.csproj", "{24C88FB0-8DF0-4DBD-AD73-E4D5B2D172B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalisScrapeTestWPF", "TalisScrapeTestWPF\TalisScrapeTestWPF.csproj", "{65843AAE-8C18-41C4-AC07-7F0A9440EB1F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{24C88FB0-8DF0-4DBD-AD73-E4D5B2D172B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24C88FB0-8DF0-4DBD-AD73-E4D5B2D172B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24C88FB0-8DF0-4DBD-AD73-E4D5B2D172B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65843AAE-8C18-41C4-AC07-7F0A9440EB1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65843AAE-8C18-41C4-AC07-7F0A9440EB1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65843AAE-8C18-41C4-AC07-7F0A9440EB1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65843AAE-8C18-41C4-AC07-7F0A9440EB1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

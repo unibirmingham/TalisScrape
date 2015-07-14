@@ -5,6 +5,7 @@ using Cache;
 using Funq;
 using TalisScraper;
 using TalisScraper.Interfaces;
+using TalisScraper.Objects.Handlers;
 
 namespace TalisScrapeTest
 {
@@ -21,9 +22,11 @@ namespace TalisScrapeTest
 
             Container.Register<ICache>(new DevNullCacheProvider());
             Container.Register<IRequestHandler>(new WebClientRequestHandler());
+            Container.Register<IExportHandler>(new OaiPmhXmlHandler());
             Container.Register<IScraper>(new JsonScraper(Container.Resolve<IRequestHandler>())
             {
                 Cache = Container.Resolve<ICache>(),
+                ExportHandler = Container.Resolve<IExportHandler>()
             });
             
 

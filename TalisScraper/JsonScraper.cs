@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -47,6 +48,7 @@ namespace TalisScraper
 
         public ILogger Log { get; set; }
         public ICache Cache { get; set; }
+        public IExportHandler ExportHandler { get; set; } 
         
         #region Async Functions
         public event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
@@ -61,7 +63,7 @@ namespace TalisScraper
         /// <returns>a string json object</returns>
         internal async Task<string> FetchJsonAsync(string uri)
         {
-            var json = await _requestHandler.FetchJsonAsync(uri).ConfigureAwait(false);
+            var json = await _requestHandler.FetchJsonAsync(uri);
 
             if (string.IsNullOrEmpty(json) && _scrapeReport != null)
                 _scrapeReport.FailedScrapes.Add(uri);
@@ -81,7 +83,7 @@ namespace TalisScraper
             if (basObj == null)
             {
 
-                var json = await FetchJsonAsync(uri).ConfigureAwait(false);
+                var json = await FetchJsonAsync(uri);
 
 
                 basObj = NavItemParser(json);
@@ -104,7 +106,7 @@ namespace TalisScraper
         {
             _scrapeCancelled = false;
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
-            var items = await FetchItemsInternalAsync(uri).ConfigureAwait(false);
+            var items = await FetchItemsInternalAsync(uri);
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
 
             return items;
@@ -116,18 +118,18 @@ namespace TalisScraper
                 return;
 
            // await Task.Yield();
-            var items = await FetchItemsInternalAsync(loc).ConfigureAwait(false);
+            var items = await FetchItemsInternalAsync(loc);
 
             if (items != null)
             {
                 foreach (var ou in items.Items.OrganizationalUnit ?? new Element[] {})
                 {
-                    await RecParseAsync(string.Format("{0}.json", ou.Value), list).ConfigureAwait(false);
+                    await RecParseAsync(string.Format("{0}.json", ou.Value), list);
                 }
 
                 foreach (var ou in items.Items.KnowledgeGrouping ?? new Element[] { })
                 {
-                    await RecParseAsync(string.Format("{0}.json", ou.Value), list).ConfigureAwait(false);
+                    await RecParseAsync(string.Format("{0}.json", ou.Value), list);
                 }
 
                 if (items.Items.UsesList.HasContent())
@@ -142,7 +144,7 @@ namespace TalisScraper
             if (_scrapeCancelled)
                 return;
 
-            var items = await FetchItemsInternalAsync(loc).ConfigureAwait(false);
+            var items = await FetchItemsInternalAsync(loc);
 
             if (items != null)
             {
@@ -150,7 +152,7 @@ namespace TalisScraper
                 {
                     Parallel.ForEach(items.Items.OrganizationalUnit, async (item, state) =>
                     {
-                        await RecParseParallelAsync(string.Format("{0}.json", item.Value), list).ConfigureAwait(false);
+                        await RecParseParallelAsync(string.Format("{0}.json", item.Value), list);
                     });
                 }
 
@@ -158,7 +160,7 @@ namespace TalisScraper
                 {
                     Parallel.ForEach(items.Items.KnowledgeGrouping, async (item, state) =>
                     {
-                        await RecParseParallelAsync(string.Format("{0}.json", item.Value), list).ConfigureAwait(false);
+                        await RecParseParallelAsync(string.Format("{0}.json", item.Value), list);
                     });
                 }
 
@@ -196,13 +198,13 @@ namespace TalisScraper
             {
                 var listsP = new ConcurrentBag<string>();
 
-                await RecParseParallelAsync(root, listsP).ConfigureAwait(false);
+                await RecParseParallelAsync(root, listsP);
 
                 lists = listsP.ToList();
             }
             else
             {
-                await RecParseAsync(root, lists).ConfigureAwait(false);
+                await RecParseAsync(root, lists);
             }
 
             stopwatch.Stop();
@@ -571,35 +573,78 @@ namespace TalisScraper
             return readingListsFinal;
         }
 
+        public string DoExport(IEnumerable<ReadingList> readingLists)
+        {
+            if (ExportHandler == null)
+            {
+                Log.Error("ExportHandler is not configured.");
+                return string.Empty;
+            }
 
-        //TODO: Flesh this out!
+            return ExportHandler.Export(readingLists);
+        }
+
+
+        /// <summary>
+        /// Parses a json object into a Book object
+        /// </summary>
+        /// <param name="uri">The source of the json object</param>
+        /// <param name="json">The json object to be parsed</param>
+        /// <returns></returns>
         private Book ParseBookInfoFromJson(string uri, string json)
         {
             var book = new Book();
 
-            var jObj = JObject.Parse(json);
-
-
-            var rawOrg = jObj.Properties().FirstOrDefault(p => p.Name.Contains("/organisations/"));
-            var rawResources = jObj.Properties().Where(p => p.Name.Contains("/resources/") && !p.Name.Contains("/authors"));
-
-
-
             try
             {
+
+                var jObj = JObject.Parse(json);
+
+
+                var rawOrg = jObj.Properties().Where(p => p.Name.Contains("/organisations/"));
+                var rawResources = jObj.Properties().Where(p => p.Name.Contains("/resources/"));// && !p.Name.Contains("/authors"));
+                var rawPeople = jObj.Properties().Where(p => p.Name.Contains("/people/"));
+
                 if (rawOrg.HasContent())
                 {
-                    foreach (var child in rawOrg.Children())
+                    //the organisation json nodes contains publisher information
+                    foreach (var org in rawOrg)
                     {
-                        if (child.HasValues && child["http://xmlns.com/foaf/0.1/name"] != null)
+                        foreach (var child in org.Children())
                         {
-                            var childa = JsonConvert.DeserializeObject<Element>(child["http://xmlns.com/foaf/0.1/name"][0].ToString());
+                            if (child.HasValues && child["http://xmlns.com/foaf/0.1/name"] != null)
+                            {
+                                var childa =
+                                    JsonConvert.DeserializeObject<Element>(
+                                        child["http://xmlns.com/foaf/0.1/name"][0].ToString());
 
-                            book.Publisher = childa != null ? childa.Value : string.Empty;
+                                book.Publisher += string.Join(", ",childa != null ? childa.Value : string.Empty);
+                            }
                         }
                     }
                 }
 
+                if (rawPeople.HasContent())
+                {
+                    //the organisation json nodes contains publisher information
+                    foreach (var person in rawPeople)
+                    {
+                        foreach (var child in person.Children())
+                        {
+                            if (child.HasValues && child["http://xmlns.com/foaf/0.1/name"] != null)
+                            {
+                                var childa =
+                                    JsonConvert.DeserializeObject<Element>(
+                                        child["http://xmlns.com/foaf/0.1/name"][0].ToString());
+
+                                if (childa != null)
+                                    book.Authors.Add(childa.Value);
+                            }
+                        }
+                    }
+                }
+
+                //the resources json nodes contain dteails about the book/journal
                 if (rawResources.HasContent())
                 {
                     foreach (var resource in rawResources)
@@ -617,7 +662,25 @@ namespace TalisScraper
                             if (resourceObj.Items.Title.HasContent())
                                 book.Title += string.Join(", ", resourceObj.Items.Title.Select(n => n.Value));
 
-                            book.URL = uri;
+                            if(resourceObj.Items.Date.HasContent())
+                                book.Date.AddRange(resourceObj.Items.Date.Select(n => n.Value));// = resourceObj.Items.Date.FirstOrDefault().Value; //todo: should we check if there are multiple dates?
+
+                            if (resourceObj.Items.Subject.HasContent())
+                                book.Subject.AddRange(resourceObj.Items.Subject.Select(n => n.Value));
+
+                            if (resourceObj.Items.Isbn10.HasContent())
+                                book.Isbn10.AddRange(resourceObj.Items.Isbn10.Select(n => n.Value));
+
+                            if (resourceObj.Items.Isbn13.HasContent())
+                                book.Isbn13.AddRange(resourceObj.Items.Isbn13.Select(n => n.Value));
+
+                            if (resourceObj.Items.Source.HasContent())
+                                book.Source.AddRange(resourceObj.Items.Source.Select(n => n.Value));
+
+                            if(resourceObj.Items.PlaceOfPublication.HasContent())
+                                book.PlaceOfPublication += string.Join(", ", resourceObj.Items.PlaceOfPublication.Select(n => n.Value)); 
+
+                            book.Url = uri;
                         }
                     }
 

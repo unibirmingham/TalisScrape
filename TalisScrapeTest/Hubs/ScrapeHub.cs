@@ -123,13 +123,13 @@ namespace TalisScrapeTest.Hubs
 
         public async Task JoinGroup(string group)
         {
-            await Groups.Add(Context.ConnectionId, group).ConfigureAwait(false);
+            await Groups.Add(Context.ConnectionId, group);
             Clients.Group(group).doMessage("Joined Group:" + group);
         }
 
         public async Task LeaveGroup(string group)
         {
-            await Groups.Remove(Context.ConnectionId, group).ConfigureAwait(false);
+            await Groups.Remove(Context.ConnectionId, group);
             Clients.Group(group).doMessage("Left Group:" + group);
         }
     }

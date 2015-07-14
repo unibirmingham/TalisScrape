@@ -57,6 +57,8 @@ namespace TalisScraper.Interfaces
 
         IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists);
 
+        string DoExport(IEnumerable<ReadingList> readingLists);
+
         /// <summary>
         /// Force the scrape to cancel
         /// </summary>

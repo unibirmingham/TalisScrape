@@ -232,7 +232,7 @@ namespace TalisScrapeTest.Tests
         public async Task FetchNavItemAsync_ValidUriValidEndPoint_ReturnsExpectedNavItem()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).ReturnsAsync(GenericJson);
-            var result = await _scraper.FetchNavItemAsync("http://testuri.com").ConfigureAwait(false);
+            var result = await _scraper.FetchNavItemAsync("http://testuri.com");
             Assert.AreEqual(result.Items.Name.First().Value, _generciNavItem.Items.Name.First().Value);
         }
 
@@ -241,7 +241,7 @@ namespace TalisScrapeTest.Tests
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync("http://invalidEndpoint.com")).Throws<WebException>();
 
-            Assert.Throws<WebException>(async () => await _scraper.FetchNavItemAsync("http://invalidEndpoint.com").ConfigureAwait(false));
+            Assert.Throws<WebException>(async () => await _scraper.FetchNavItemAsync("http://invalidEndpoint.com"));
         }
 
         //todo: should we actually mock response, and check for json content type?
@@ -250,14 +250,14 @@ namespace TalisScrapeTest.Tests
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync("http://noneJsonEndpoint.com")).Throws<InvalidDataException>();
 
-            Assert.Throws<InvalidDataException>(async () => await _scraper.FetchNavItemAsync("http://noneJsonEndpoint.com").ConfigureAwait(false));
+            Assert.Throws<InvalidDataException>(async () => await _scraper.FetchNavItemAsync("http://noneJsonEndpoint.com"));
         }
 
         [Test]
         public async Task FetchNavItemAsync_InValidUri_ThrowsUriFormatException()
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync("InvalidUri")).ReturnsAsync(string.Empty);
-            Assert.IsNull(await _scraper.FetchNavItemAsync("InvalidUri").ConfigureAwait(false));
+            Assert.IsNull(await _scraper.FetchNavItemAsync("InvalidUri"));
         }
 
         [Test]

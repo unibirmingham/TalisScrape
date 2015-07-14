@@ -56,7 +56,7 @@ namespace TalisScrapeTest.Controllers
             _scraper.ScrapeStarted += ScraperOnScrapeStarted;
             _scraper.ScrapeEnded += ScraperOnScrapeEnded;
             _scraper.ResourceScraped += ScraperOnResourceScraped;
-            var baseItem = await _scraper.FetchNavItemAsync(name).ConfigureAwait(false);
+            var baseItem = await _scraper.FetchNavItemAsync(name);
             _scraper.ScrapeStarted -= ScraperOnScrapeStarted;
             _scraper.ScrapeEnded -= ScraperOnScrapeEnded;
             _scraper.ResourceScraped -= ScraperOnResourceScraped;
@@ -82,7 +82,7 @@ namespace TalisScrapeTest.Controllers
             _scraper.ResourceScraped += ScraperOnResourceScraped;
             _scraper.ScrapeCancelled += ScraperOnScrapeCancelled;
 
-            var lists = await _scraper.ScrapeReadingListsAsync(name).ConfigureAwait(false);//Async();//pass root in here?
+            var lists = await _scraper.ScrapeReadingListsAsync(name);//Async();//pass root in here?
 
 
 
@@ -102,8 +102,12 @@ namespace TalisScrapeTest.Controllers
 
                 if (bookScrapeReport != null)
                     _scrapeHub.Clients.Group("scrapeReports").doReport(bookScrapeReport.ToJson());
+
+                var export = _scraper.DoExport(tst);
             }
 
+
+            
             _scraper.ScrapeStarted -= ScraperOnScrapeStarted;
             _scraper.ScrapeEnded -= ScraperOnScrapeEnded;
             _scraper.ResourceScraped -= ScraperOnResourceScraped;
