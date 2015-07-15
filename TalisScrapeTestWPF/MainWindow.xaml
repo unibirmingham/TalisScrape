@@ -1,17 +1,30 @@
 ﻿<Window x:Class="TalisScrapeTestWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-
-        <Button  Content="Start Scrape" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Width="75" Name="BtnDoScrape" Click="BtnDoScrape_OnClick"/>
-        <ScrollViewer Height="245" Margin="10,65,0,0" VerticalAlignment="Top" Width="497" Name="SvOutput" HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Left" >
-            <StackPanel Orientation="Vertical">
-                <TextBlock Name="Test" Margin="3" FontStyle="Italic" VerticalAlignment="Stretch"
-                      TextWrapping="Wrap" TextAlignment="Justify" Width="489" AllowDrop="False" Foreground="#FF0000E7" FontFamily="Lucida Sans Unicode" />
-            </StackPanel>
-        </ScrollViewer>
+        Title="MainWindow" Height="394" Width="549" Background="{x:Null}">
+    <Window.Effect>
+        <DropShadowEffect BlurRadius="10" RenderingBias="Quality" ShadowDepth="2"/>
+    </Window.Effect>
+    <DockPanel Background="White">
+        <Menu DockPanel.Dock="Top">
+           <!-- <MenuItem Header="_File">
+            </MenuItem> -->
+        </Menu>
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock HorizontalAlignment="Right" Name="SbStatus"/>
+        </StatusBar>
+        <Grid>
+            <Button  Content="Start Scrape" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Width="Auto
+" Name="BtnDoScrape" Click="BtnDoScrape_OnClick"/>
         <Button  Content="Cancel Scrape" HorizontalAlignment="Left" Margin="100,10,0,0" VerticalAlignment="Top" Width="92" x:Name="BtnCancelScrape" Click="BtnCancelScrape_Click"/>
+            <StackPanel Orientation="Vertical" Margin="10,65,10,0">
+                <ScrollViewer Height="245"  VerticalAlignment="Top" Width="{Binding Path=ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=StackPanel}}" Name="SvOutput" HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Left" DockPanel.Dock="Right" >
 
-    </Grid>
+                    <TextBlock Name="Test" Margin="3" FontStyle="Italic" VerticalAlignment="Stretch"
+                      TextWrapping="Wrap" TextAlignment="Justify" Width="Auto" AllowDrop="False" Foreground="#FF0000E7" FontFamily="Lucida Sans Unicode" />
+
+                </ScrollViewer>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
 </Window>
