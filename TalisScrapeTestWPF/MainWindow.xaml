@@ -5,7 +5,7 @@
     <Window.Effect>
         <DropShadowEffect BlurRadius="10" RenderingBias="Quality" ShadowDepth="2"/>
     </Window.Effect>
-    <DockPanel Background="White">
+    <DockPanel>
         <Menu DockPanel.Dock="Top">
            <!-- <MenuItem Header="_File">
             </MenuItem> -->
