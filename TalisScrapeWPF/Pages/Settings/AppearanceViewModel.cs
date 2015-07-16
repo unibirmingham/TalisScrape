@@ -1,10 +1,6 @@
 ﻿using FirstFloor.ModernUI.Presentation;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace TalisScrapeWPF.Pages.Settings
@@ -32,7 +28,7 @@ namespace TalisScrapeWPF.Pages.Settings
         };*/
 
         // 20 accent colors from Windows Phone 8
-        private Color[] accentColors = new Color[]{
+        private readonly Color[] _accentColors = {
             Color.FromRgb(0xa4, 0xc4, 0x00),   // lime
             Color.FromRgb(0x60, 0xa9, 0x17),   // green
             Color.FromRgb(0x00, 0x8a, 0x00),   // emerald
@@ -55,18 +51,17 @@ namespace TalisScrapeWPF.Pages.Settings
             Color.FromRgb(0x87, 0x79, 0x4e),   // taupe
         };
 
-        private Color selectedAccentColor;
-        private LinkCollection themes = new LinkCollection();
-        private Link selectedTheme;
-        private string selectedFontSize;
+        private Color _selectedAccentColor;
+        private readonly LinkCollection _themes = new LinkCollection();
+        private Link _selectedTheme;
+        private string _selectedFontSize;
 
         public AppearanceViewModel()
         {
             // add the default themes
-            this.themes.Add(new Link { DisplayName = "dark", Source = AppearanceManager.DarkThemeSource });
-            this.themes.Add(new Link { DisplayName = "light", Source = AppearanceManager.LightThemeSource });
+            _themes.Add(new Link { DisplayName = "dark", Source = AppearanceManager.DarkThemeSource });
+            _themes.Add(new Link { DisplayName = "light", Source = AppearanceManager.LightThemeSource });
 
-            this.SelectedFontSize = AppearanceManager.Current.FontSize == FontSize.Large ? FontLarge : FontSmall;
             SyncThemeAndColor();
 
             AppearanceManager.Current.PropertyChanged += OnAppearanceManagerPropertyChanged;
@@ -75,10 +70,10 @@ namespace TalisScrapeWPF.Pages.Settings
         private void SyncThemeAndColor()
         {
             // synchronizes the selected viewmodel theme with the actual theme used by the appearance manager.
-            this.SelectedTheme = this.themes.FirstOrDefault(l => l.Source.Equals(AppearanceManager.Current.ThemeSource));
+            SelectedTheme = _themes.FirstOrDefault(l => l.Source.Equals(AppearanceManager.Current.ThemeSource));
 
             // and make sure accent color is up-to-date
-            this.SelectedAccentColor = AppearanceManager.Current.AccentColor;
+            SelectedAccentColor = AppearanceManager.Current.AccentColor;
         }
 
         private void OnAppearanceManagerPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -91,27 +86,27 @@ namespace TalisScrapeWPF.Pages.Settings
 
         public LinkCollection Themes
         {
-            get { return this.themes; }
+            get { return _themes; }
         }
 
         public string[] FontSizes
         {
-            get { return new string[] { FontSmall, FontLarge }; }
+            get { return new[] { FontSmall, FontLarge }; }
         }
 
         public Color[] AccentColors
         {
-            get { return this.accentColors; }
+            get { return _accentColors; }
         }
 
         public Link SelectedTheme
         {
-            get { return this.selectedTheme; }
+            get { return _selectedTheme; }
             set
             {
-                if (this.selectedTheme != value)
+                if (_selectedTheme != value)
                 {
-                    this.selectedTheme = value;
+                    _selectedTheme = value;
                     OnPropertyChanged("SelectedTheme");
 
                     // and update the actual theme
@@ -122,12 +117,12 @@ namespace TalisScrapeWPF.Pages.Settings
 
         public string SelectedFontSize
         {
-            get { return this.selectedFontSize; }
+            get { return _selectedFontSize; }
             set
             {
-                if (this.selectedFontSize != value)
+                if (_selectedFontSize != value)
                 {
-                    this.selectedFontSize = value;
+                    _selectedFontSize = value;
                     OnPropertyChanged("SelectedFontSize");
 
                     AppearanceManager.Current.FontSize = value == FontLarge ? FontSize.Large : FontSize.Small;
@@ -137,12 +132,12 @@ namespace TalisScrapeWPF.Pages.Settings
 
         public Color SelectedAccentColor
         {
-            get { return this.selectedAccentColor; }
+            get { return _selectedAccentColor; }
             set
             {
-                if (this.selectedAccentColor != value)
+                if (_selectedAccentColor != value)
                 {
-                    this.selectedAccentColor = value;
+                    _selectedAccentColor = value;
                     OnPropertyChanged("SelectedAccentColor");
 
                     AppearanceManager.Current.AccentColor = value;

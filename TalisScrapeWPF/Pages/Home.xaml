@@ -7,17 +7,5 @@
              d:DesignHeight="300" d:DesignWidth="300">
 
 
-    <Grid>
-        <Button  Content="Start Scrape" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Width="Auto
-" Name="BtnDoScrape" Click="BtnDoScrape_OnClick"/>
-        <Button  Content="Cancel Scrape" HorizontalAlignment="Left" Margin="132,10,0,0" VerticalAlignment="Top" Width="115" x:Name="BtnCancelScrape" Click="BtnCancelScrape_Click"/>
-        <StackPanel Orientation="Vertical" Margin="10,65,10,0">
-            <ScrollViewer Height="245"  VerticalAlignment="Top" Width="{Binding Path=ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=StackPanel}}" Name="SvOutput" HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Left" DockPanel.Dock="Right" >
-
-                <TextBlock Name="Test" Margin="3" FontStyle="Italic" VerticalAlignment="Stretch"
-                      TextWrapping="Wrap" TextAlignment="Justify" Width="Auto" AllowDrop="False" Foreground="#FF0000E7" FontFamily="Lucida Sans Unicode" />
-
-            </ScrollViewer>
-        </StackPanel>
-    </Grid>
+    
 </UserControl>
