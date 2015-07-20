@@ -29,18 +29,26 @@ namespace TalisScraper.Interfaces
         /// </summary>
         event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
 
-            /// <summary>
+        /// <summary>
         /// Fetches Base type navigation item parsed from json located at the specified uri using async
         /// </summary>
         /// <param name="uri">A uri to the json data to be parsed</param>
         /// <returns>A base type object</returns>
         Task<NavItem> FetchNavItemAsync(string uri);
+
         /// <summary>
         /// Fetches all reading lists found recursively from the specified uri using async
         /// </summary>
         /// <param name="root">A uri to the json data to be scraped</param>
         /// <returns>A collection of reading lists</returns>
         Task<IEnumerable<string>> ScrapeReadingListsAsync(string root);
+
+        /// <summary>
+        /// Populates ReadList objects with Book Items found at the uri specified in the passed collection of uris using async
+        /// </summary>
+        /// <param name="readingLists">A collection of uris pointing to Book Items</param>
+        /// <returns>A collection of populated ReadingList objects</returns>
+        Task<IEnumerable<ReadingList>> PopulateReadingListsAsync(IEnumerable<string> readingLists);
 
         /// <summary>
         /// Fetches Base type navigation item parsed from json located at the specified uri
@@ -55,8 +63,18 @@ namespace TalisScraper.Interfaces
         /// <returns>A collection of reading lists</returns>
         IEnumerable<string> ScrapeReadingLists(string root);
 
+        /// <summary>
+        /// Populates ReadList objects with Book Items found at the uri specified in the passed collection of uris
+        /// </summary>
+        /// <param name="readingLists">A collection of uris pointing to Book Items</param>
+        /// <returns>A collection of populated ReadingList objects</returns>
         IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists);
 
+        /// <summary>
+        /// returns a string export of populated ReadingList objects
+        /// </summary>
+        /// <param name="readingLists"></param>
+        /// <returns></returns>
         string DoExport(IEnumerable<ReadingList> readingLists);
 
         /// <summary>

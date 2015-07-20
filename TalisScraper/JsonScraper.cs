@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -216,6 +215,173 @@ namespace TalisScraper
 
             return lists;
         }
+
+        public async Task<IEnumerable<ReadingList>> PopulateReadingListsAsync(IEnumerable<string> readingLists)
+        {
+            _scrapeCancelled = false;
+            if (!readingLists.HasContent())
+            {
+                Log.Error("Attempted to populate reading lists, but passed in list object was null.");
+                return null;
+            }
+
+
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
+            _scrapeReport = new ScrapeReport { ScrapeStarted = DateTime.Now };
+
+            IEnumerable<ReadingList> readingListsFinal;
+
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            if (_scrapeConfig != null && _scrapeConfig.EnableParallelProcessing)
+                readingListsFinal = await DoPopulateReadingListsParallelAsync(readingLists);
+            else
+                readingListsFinal = await DoPopulateReadingListsAsync(readingLists);
+
+
+            stopWatch.Start();
+
+            _scrapeReport.ScrapeEnded = DateTime.Now;
+            _scrapeReport.TimeTaken = stopWatch.Elapsed;
+
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.Books));
+
+            return readingListsFinal;
+        }
+
+
+        private async Task<IEnumerable<ReadingList>> DoPopulateReadingListsAsync(IEnumerable<string> readingLists)
+        {
+            var readingListCollection = new Collection<ReadingList>();
+            foreach (var item in readingLists)
+            {
+                var uri = string.Format("{0}.json", item);
+
+                var readingListNavObj = await FetchItemsInternalAsync(uri);
+
+                if (readingListNavObj == null)
+                {
+                    Log.Error("Reading list from uri:{0} could not be scraped.", uri);
+                    continue;
+                }
+
+                readingListCollection.Add(new ReadingList { Uri = uri, ListInfo = readingListNavObj });
+
+            }
+
+            if (readingListCollection.HasContent())
+            {//fetch books from discovered lists and add them to the relevant list
+                foreach (var rlItem in readingListCollection)
+                {
+                    if (_scrapeCancelled) return null;
+                    foreach (var rlItemList in rlItem.ListInfo.Items.Contains)
+                    {
+                        if (_scrapeCancelled) return null;
+                        if (rlItemList.Value.Contains("/items/"))
+                        {
+                            var getbookItems = FetchItemsInternal(rlItem.Uri);
+
+                            if (getbookItems != null && getbookItems.Items.Contains.HasContent())
+                            {//scrape individual book info
+                                foreach (var book in getbookItems.Items.Contains)
+                                {
+                                    if (_scrapeCancelled) return null;
+                                    if (book.Value.Contains("/items/"))
+                                    {
+                                        var bookItem = FetchJson(string.Format("{0}.json", book.Value));
+
+                                        if (!string.IsNullOrEmpty(bookItem))
+                                        {
+                                            var bookObj = ParseBookInfoFromJson(book.Value, bookItem);
+
+                                            if (bookObj != null)
+                                                rlItem.Books.Add(bookObj);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return readingListCollection;
+        }
+
+        private async Task<IEnumerable<ReadingList>> DoPopulateReadingListsParallelAsync(IEnumerable<string> readingLists)
+        {
+            var readingListCollection = new ConcurrentBag<ReadingList>();
+
+            Parallel.ForEach(readingLists, async (currentUri, state) =>
+            {
+                if (_scrapeCancelled) state.Break();
+                var uri = string.Format("{0}.json", currentUri);
+
+                var readingListNavObj = await FetchItemsInternalAsync(uri);
+
+                if (readingListNavObj == null)
+                {
+                    Log.Error("Reading list from uri:{0} could not be scraped.", uri);
+
+                }
+                else
+                {
+                    readingListCollection.Add(new ReadingList { Uri = uri, ListInfo = readingListNavObj });
+                }
+
+
+            });
+
+            var tst = readingListCollection;//.ToArray();
+
+            if (tst.HasContent())
+            {//fetch books from discovered lists and add them to the relevant list
+
+                Parallel.ForEach(readingListCollection, async (currentList, state) =>
+                {
+                    if (_scrapeCancelled) state.Break();
+                    foreach (var rlItemList in currentList.ListInfo.Items.Contains)
+                    {
+                        if (_scrapeCancelled) state.Break();
+                        if (rlItemList.Value.Contains("/items/"))
+                        {
+                            var getbookItems = await FetchItemsInternalAsync(currentList.Uri);
+
+                            if (getbookItems != null && getbookItems.Items.Contains.HasContent())
+                            {//scrape individual book info
+
+                                Parallel.ForEach(getbookItems.Items.Contains, (item, subState) =>
+                                {
+                                    {
+                                        if (_scrapeCancelled) state.Break();
+                                        if (item.Value.Contains("/items/"))
+                                        {
+                                            var bookItem = FetchJson(string.Format("{0}.json", item.Value));
+
+                                            if (!string.IsNullOrEmpty(bookItem))
+                                            {
+                                                var bookObj = ParseBookInfoFromJson(item.Value, bookItem);
+
+                                                if (bookObj != null)
+                                                    currentList.Books.Add(bookObj);
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+
+                });
+
+
+            }
+
+            return readingListCollection.ToList();
+        }
+
         #endregion
 
         #region Sync Functions
@@ -583,7 +749,6 @@ namespace TalisScraper
 
             return ExportHandler.Export(readingLists);
         }
-
 
         /// <summary>
         /// Parses a json object into a Book object

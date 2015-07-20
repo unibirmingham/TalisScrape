@@ -8,7 +8,6 @@ using NUnit.Framework;
 using TalisScraper;
 using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
-using TalisScraper.Objects;
 using TalisScraper.Objects.JsonMaps;
 
 
@@ -23,7 +22,7 @@ namespace TalisScrapeTest.Tests
     */
 
     [TestFixture]
-    public class ScraperTests
+    public class JsonScraperTests
     {
         private JsonScraper _scraper;
         private IRequestHandler _requestHandler;
@@ -196,13 +195,13 @@ namespace TalisScrapeTest.Tests
 
             _scraper.ScrapeReadingLists(uri);
 
-            Assert.AreEqual(eventArgs.URI, uri);
+            StringAssert.AreEqualIgnoringCase(eventArgs.URI, uri);
         }
 
         [Test]
         public void ScrapeReadingLists_ScrapeThreeResources_ScrapeEventFiredThreeTimes()
         {
-            const string uri = "http://testuri.com";
+          //  const string uri = "http://testuri.com";
 
             _moqReqHandler.Setup(m => m.FetchJson(It.IsAny<string>())).Returns(GenericJson);
             

@@ -1,20 +1,10 @@
-﻿using FirstFloor.ModernUI.Windows.Controls;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using FirstFloor.ModernUI.Windows.Controls;
 
-namespace FirstFloor.ModernUI.App.Content
+namespace TalisScrapeTestWPF.Content
 {
     /// <summary>
     /// Interaction logic for ContentLoaderImages.xaml
@@ -30,7 +20,7 @@ namespace FirstFloor.ModernUI.App.Content
 
         private async void LoadImageLinks()
         {
-            var loader = (FlickrImageLoader)Tab.ContentLoader;
+           /* var loader = (FlickrImageLoader)Tab.ContentLoader;
 
             try {
                 // load image links and assign to tab list
@@ -41,7 +31,9 @@ namespace FirstFloor.ModernUI.App.Content
             }
             catch (Exception e) {
                 ModernDialog.ShowMessage(e.Message, "Failure", MessageBoxButton.OK);
-            }
+            }*/
+
+            throw new NotImplementedException();
         }
     }
 }

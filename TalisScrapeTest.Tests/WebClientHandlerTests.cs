@@ -20,7 +20,6 @@ namespace TalisScrapeTest.Tests
     [TestFixture]
     public class WebClientHandlerTests
     {
-      
         private IRequestHandler _requestHandler;
         private Mock<IRequestHandler> _moqReqHandler;
 

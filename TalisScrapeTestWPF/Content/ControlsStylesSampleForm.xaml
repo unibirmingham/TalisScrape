@@ -18,9 +18,9 @@
             <StackPanel x:Name="Form" Orientation="Vertical">
 
                 <!-- create viewmodel -->
-                <StackPanel.DataContext>
+                <!--<StackPanel.DataContext>
                     <app:SampleFormViewModel />
-                </StackPanel.DataContext>
+                </StackPanel.DataContext>-->
 
                 <StackPanel.Resources>
                     <Style TargetType="StackPanel">

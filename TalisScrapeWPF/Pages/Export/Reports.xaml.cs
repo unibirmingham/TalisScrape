@@ -1,8 +1,6 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 
-
-namespace TalisScrapeWPF.Pages
+namespace TalisScrapeWPF.Pages.Export
 {
     /// <summary>
     /// Interaction logic for Home.xaml

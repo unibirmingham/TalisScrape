@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
 using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
 
-namespace TalisScrapeWPF.Pages
+namespace TalisScrapeWPF.Pages.Scrape
 {
     /// <summary>
     /// Interaction logic for Home.xaml

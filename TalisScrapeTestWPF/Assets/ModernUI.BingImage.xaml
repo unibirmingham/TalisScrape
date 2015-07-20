@@ -7,10 +7,10 @@
         <ResourceDictionary Source="/FirstFloor.ModernUI;component/Assets/ModernUI.Light.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Rectangle x:Key="WindowBackgroundContent" x:Shared="false" >
+  <!--  <Rectangle x:Key="WindowBackgroundContent" x:Shared="false" >
         <Rectangle.Fill>
             <ImageBrush local:BingImage.UseBingImage="True" Opacity=".3" Stretch="UniformToFill" />
         </Rectangle.Fill>
-    </Rectangle>
+    </Rectangle>-->
 
 </ResourceDictionary>
