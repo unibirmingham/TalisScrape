@@ -30,6 +30,11 @@ namespace TalisScraper.Interfaces
         event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
 
         /// <summary>
+        /// Event fired when a scrape attempt fails
+        /// </summary>
+        event EventHandler<ScrapeFailedEventArgs> ScrapeFailed;
+
+        /// <summary>
         /// Fetches Base type navigation item parsed from json located at the specified uri using async
         /// </summary>
         /// <param name="uri">A uri to the json data to be parsed</param>

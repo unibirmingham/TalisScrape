@@ -4,7 +4,9 @@ using System.Net;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
+using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
+using TalisScraper.Objects.Handlers;
 
 namespace TalisScrapeTest.Tests
 {
@@ -20,15 +22,15 @@ namespace TalisScrapeTest.Tests
     [TestFixture]
     public class WebClientHandlerTests
     {
-        private IRequestHandler _requestHandler;
-        private Mock<IRequestHandler> _moqReqHandler;
+        private WebClientRequestHandler _requestHandler;
+        private Mock<WebClientRequestHandler> _moqReqHandler;
 
         private const string GenericJson = "{\"http://demo.talisaspire.com/\": {\"http://purl.org/vocab/aiiso/schema#name\": [{\"value\": \"Broadminster\",\"type\": \"literal\"}]}}";
 
         [SetUp]
         public void SetUp()
         {
-          _moqReqHandler = new Mock<IRequestHandler>();
+          _moqReqHandler = new Mock<WebClientRequestHandler>();
           _requestHandler = _moqReqHandler.Object;
         }
 
@@ -62,6 +64,8 @@ namespace TalisScrapeTest.Tests
             Assert.Throws<UriFormatException>(() => _requestHandler.FetchJson("InvalidUri"));
         }
 
+
+
         #endregion
 
         #region Async Tests
@@ -92,6 +96,23 @@ namespace TalisScrapeTest.Tests
         {
             _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).Throws<UriFormatException>();
             Assert.Throws<UriFormatException>(async () => await _requestHandler.FetchJsonAsync("InvalidUri"));
+        }
+
+        [Test]
+        public async Task FetchNavItemAsync_ValidUriInValidEndPoint_RequestFailedEventRaised()
+        {
+            _moqReqHandler.Setup(m => m.FetchJsonAsync(It.IsAny<string>())).Throws<WebException>();
+            _moqReqHandler.Setup(m => m.InstantiateWebClient(new WebClient()));
+            RequestFailedEventArgs eventArgs = null;
+
+            _requestHandler.RequestFailed += (sender, args) =>
+            {
+                eventArgs = args;
+            };
+
+            await _requestHandler.FetchJsonAsync("http://testuri.com");
+
+            Assert.NotNull(eventArgs);
         }
 
         #endregion

@@ -52,6 +52,7 @@ namespace TalisScraper
         #region Async Functions
         public event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
         public event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
+        public event EventHandler<ScrapeFailedEventArgs> ScrapeFailed;
         public event EventHandler<ScrapeStartedEventArgs> ScrapeStarted;
         public event EventHandler<ResourceScrapedEventArgs> ResourceScraped;
 
@@ -177,7 +178,7 @@ namespace TalisScraper
         {
             if (string.IsNullOrEmpty(root))
             {
-                Log.Error("Scraper.ParseTest: Could not initiate scrape. The root node address was empty.");
+                Log.Error("Could not initiate scrape. The root node address was empty.");
                 return null;
             }
             _scrapeCancelled = false;

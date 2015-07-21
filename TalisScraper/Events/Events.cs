@@ -2,6 +2,7 @@
 //## Event Args are defined in this file ##
 //#########################################
 using System;
+using System.Net;
 using TalisScraper.Enums;
 
 namespace TalisScraper.Events.Args
@@ -49,6 +50,36 @@ namespace TalisScraper.Events.Args
         public ScrapeCancelledEventArgs()
         {
             Ended = DateTime.Now;
+        }
+    }
+
+    public class ScrapeFailedEventArgs : EventArgs
+    {
+        public string URI { get; internal set; }
+        public string StatusCode { get; set; }
+        public string ErrorMessage { get; set; }
+
+        public ScrapeFailedEventArgs(string uri, string statusCode = "", string errorMessage = "")
+        {
+            URI = uri;
+            StatusCode = statusCode;
+            ErrorMessage = errorMessage;
+        }
+    }
+
+
+
+    public class RequestFailedEventArgs : EventArgs
+    {
+        public string URI { get; internal set; }
+        public string StatusCode { get; set; }
+        public string ErrorMessage { get; set; }
+
+        public RequestFailedEventArgs(string uri, string statusCode = "", string errorMessage = "")
+        {
+            URI = uri;
+            StatusCode = statusCode;
+            ErrorMessage = errorMessage;
         }
     }
 }
