@@ -18,44 +18,54 @@ using TalisScraper.Events.Args;
 using TalisScraper.Interfaces;
 using TalisScraper.Objects.JsonMaps;
 
-//TODO: should we lock per scrape, so if another scrape is initiated before current scrap[e ends, we deny it? Also a 'stop scrape' function?
-
 //Make internals visible to testing framework
 #if DEBUG
 [assembly: InternalsVisibleTo("TalisScrapeTest.Tests")]
 #endif
 namespace TalisScraper
 {
-    //TODO: have a scrape options class for configuration?
+    /// <summary>
+    /// Scraper to fetch and parse Talis Aspire json reading list information
+    /// </summary>
     public class JsonScraper : IScraper
     {
+        #region Private Vars
         private const string RootRegex = "\"([^\"]+)\"";
         private readonly IRequestHandler _requestHandler;
+        private bool _scrapeInProgress = false;
 
         private readonly ScrapeConfig _scrapeConfig;
 
         private volatile bool _scrapeCancelled;
 
+        private Stopwatch _stopwatch;
+
+        //todo: Have a collection of reports stored from current app start? Perhaps each scrape has a guid or UID, and report stored against that? Might help for DB storage.
         private ScrapeReport _scrapeReport = null;
+        #endregion
 
         public JsonScraper(IRequestHandler requestHandler, ScrapeConfig scrapeConfig = null)
         {
             Log = LogManager.GetCurrentClassLogger();//todo: inject this in?
             _requestHandler = requestHandler;
             _scrapeConfig = scrapeConfig;
+
+            _stopwatch = new Stopwatch();
         }
 
         public ILogger Log { get; set; }
         public ICache Cache { get; set; }
         public IExportHandler ExportHandler { get; set; } 
         
-        #region Async Functions
+        #region Event Definitions
         public event EventHandler<ScrapeEndedEventArgs> ScrapeEnded;
         public event EventHandler<ScrapeCancelledEventArgs> ScrapeCancelled;
         public event EventHandler<ScrapeFailedEventArgs> ScrapeFailed;
         public event EventHandler<ScrapeStartedEventArgs> ScrapeStarted;
         public event EventHandler<ResourceScrapedEventArgs> ResourceScraped;
+        #endregion
 
+        #region Async Functions
         /// <summary>
         /// Fetches json object from the specified uri using async
         /// </summary>
@@ -104,10 +114,19 @@ namespace TalisScraper
 
         public async Task<NavItem> FetchNavItemAsync(string uri)
         {
+            if (_scrapeInProgress)
+                return null;
+
+            _scrapeInProgress = true;
             _scrapeCancelled = false;
+
             if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+
             var items = await FetchItemsInternalAsync(uri);
+
             if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+
+            _scrapeInProgress = false;
 
             return items;
         }
@@ -181,20 +200,15 @@ namespace TalisScraper
                 Log.Error("Could not initiate scrape. The root node address was empty.");
                 return null;
             }
-            _scrapeCancelled = false;
-            var doParallel = _scrapeConfig != null && _scrapeConfig.EnableParallelProcessing;
+
+            const ScrapeType scrapeType = ScrapeType.ReadingList;
+
+            if (!ScrapeInitiation(scrapeType))
+                return null;
 
             var lists = new List<string>();
-            var stopwatch = new Stopwatch();
-            _scrapeReport = new ScrapeReport();
 
-            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
-
-            _scrapeReport.ScrapeStarted = DateTime.Now;
-
-            stopwatch.Start();
-
-            if (doParallel)
+            if (_scrapeConfig != null && _scrapeConfig.EnableParallelProcessing)
             {
                 var listsP = new ConcurrentBag<string>();
 
@@ -207,50 +221,35 @@ namespace TalisScraper
                 await RecParseAsync(root, lists);
             }
 
-            stopwatch.Stop();
-
-            _scrapeReport.ScrapeEnded = DateTime.Now;
-            _scrapeReport.TimeTaken = stopwatch.Elapsed;
-
-            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+            ScrapeCleanup(scrapeType);
 
             return lists;
         }
 
         public async Task<IEnumerable<ReadingList>> PopulateReadingListsAsync(IEnumerable<string> readingLists)
         {
-            _scrapeCancelled = false;
             if (!readingLists.HasContent())
             {
                 Log.Error("Attempted to populate reading lists, but passed in list object was null.");
                 return null;
             }
 
+            const ScrapeType scrapeType = ScrapeType.Books;
 
-            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
-            _scrapeReport = new ScrapeReport { ScrapeStarted = DateTime.Now };
+            if (!ScrapeInitiation(scrapeType))
+                return null;
 
             IEnumerable<ReadingList> readingListsFinal;
-
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
 
             if (_scrapeConfig != null && _scrapeConfig.EnableParallelProcessing)
                 readingListsFinal = await DoPopulateReadingListsParallelAsync(readingLists);
             else
                 readingListsFinal = await DoPopulateReadingListsAsync(readingLists);
 
-
-            stopWatch.Start();
-
-            _scrapeReport.ScrapeEnded = DateTime.Now;
-            _scrapeReport.TimeTaken = stopWatch.Elapsed;
-
-            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.Books));
+            ScrapeCleanup(scrapeType);
 
             return readingListsFinal;
         }
-
 
         private async Task<IEnumerable<ReadingList>> DoPopulateReadingListsAsync(IEnumerable<string> readingLists)
         {
@@ -406,7 +405,6 @@ namespace TalisScraper
             return json;
         }
 
-
         private NavItem NavItemParser(string json)
         {
             if (string.IsNullOrEmpty(json))
@@ -428,7 +426,6 @@ namespace TalisScraper
 
             return convertedNav;
         }
-
 
         /// <summary>
         /// Fetches Items, has been made internal so the public Fetch Item func can fire scrape start and stop events for individual items
@@ -460,10 +457,14 @@ namespace TalisScraper
 
         public NavItem FetchNavItem(string uri)
         {
-            _scrapeCancelled = false;
-            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
+            const ScrapeType scrapeType = ScrapeType.Item;
+
+            if (!ScrapeInitiation(scrapeType))
+                return null;
+
             var items = FetchItemsInternal(uri);
-            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+
+            ScrapeCleanup(scrapeType);
 
             return items;
         }
@@ -540,16 +541,13 @@ namespace TalisScraper
                 return null;
             }
 
-            _scrapeCancelled = false;
+            const ScrapeType scrapeType = ScrapeType.ReadingList;
+
+            if (!ScrapeInitiation(scrapeType))
+                return null;
+
             var lists = new List<string>();
-            var stopwatch = new Stopwatch();
-            _scrapeReport = new ScrapeReport();
 
-            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.ReadingList));
-
-            _scrapeReport.ScrapeStarted = DateTime.Now;
-
-            stopwatch.Start();
 
             if (_scrapeConfig != null && _scrapeConfig.EnableParallelProcessing)
             {
@@ -563,16 +561,10 @@ namespace TalisScraper
                 RecParse(root, ref lists);
             }
 
-            stopwatch.Stop();
-
-            _scrapeReport.ScrapeEnded = DateTime.Now;
-            _scrapeReport.TimeTaken = stopwatch.Elapsed;
-
-            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.ReadingList));
+            ScrapeCleanup(scrapeType);
 
             return lists;
         }
-
 
         private IEnumerable<ReadingList> DoPopulateReadingListsParallel(IEnumerable<string> readingLists)
         {
@@ -708,37 +700,30 @@ namespace TalisScraper
         //todo: how does cancel scrape fit into this? Might pass a prescraped collection in, so can't assume we outright cancel it
         public IEnumerable<ReadingList> PopulateReadingLists(IEnumerable<string> readingLists)
         {//scrape lists from passed in uri collection of lists
-            _scrapeCancelled = false;
+
             if (!readingLists.HasContent())
             {
                 Log.Error("Attempted to populate reading lists, but passed in list object was null.");
                 return null;
             }
 
+            const ScrapeType scrapeType = ScrapeType.Books;
 
-            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(ScrapeType.Books));
-            _scrapeReport = new ScrapeReport {ScrapeStarted = DateTime.Now};
+            if (!ScrapeInitiation(scrapeType))
+                return null;
 
             IEnumerable<ReadingList> readingListsFinal;
-
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
 
             if (_scrapeConfig != null && _scrapeConfig.EnableParallelProcessing)
                 readingListsFinal = DoPopulateReadingListsParallel(readingLists);
             else
                 readingListsFinal = DoPopulateReadingLists(readingLists);
 
-
-            stopWatch.Start();
-
-            _scrapeReport.ScrapeEnded = DateTime.Now;
-            _scrapeReport.TimeTaken = stopWatch.Elapsed;
-
-            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(ScrapeType.Books));
+            ScrapeCleanup(scrapeType);
 
             return readingListsFinal;
         }
+        #endregion
 
         public string DoExport(IEnumerable<ReadingList> readingLists)
         {
@@ -751,12 +736,56 @@ namespace TalisScraper
             return ExportHandler.Export(readingLists);
         }
 
+        #region shared functions
+
         /// <summary>
-        /// Parses a json object into a Book object
+        /// Initiates vars and events prior to starting a scrape
         /// </summary>
-        /// <param name="uri">The source of the json object</param>
-        /// <param name="json">The json object to be parsed</param>
         /// <returns></returns>
+        private bool ScrapeInitiation(ScrapeType type)
+        {
+            if (_scrapeInProgress)
+                return false;
+
+            _scrapeInProgress = true;
+
+            if (ScrapeStarted != null) ScrapeStarted(this, new ScrapeStartedEventArgs(type));
+            _scrapeReport = new ScrapeReport { ScrapeStarted = DateTime.Now };
+
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+
+            _scrapeCancelled = false;
+
+
+
+            return true;
+        }
+
+        /// <summary>
+        /// resets vars and cleans up events after a scrape has finished
+        /// </summary>
+        private void ScrapeCleanup(ScrapeType type)
+        {
+            _stopwatch.Stop();
+
+            _scrapeReport.ScrapeEnded = DateTime.Now;
+            _scrapeReport.TimeTaken = _stopwatch.Elapsed;
+
+            if (ScrapeEnded != null) ScrapeEnded(this, new ScrapeEndedEventArgs(type));
+
+
+            _scrapeInProgress = false;
+        }
+
+        public bool CancelScrape()
+        {
+            _scrapeCancelled = true;
+
+            if(ScrapeCancelled != null) ScrapeCancelled(this, new ScrapeCancelledEventArgs());
+
+            return true;
+        }
         private Book ParseBookInfoFromJson(string uri, string json)
         {
             var book = new Book();
@@ -784,7 +813,7 @@ namespace TalisScraper
                                     JsonConvert.DeserializeObject<Element>(
                                         child["http://xmlns.com/foaf/0.1/name"][0].ToString());
 
-                                book.Publisher += string.Join(", ",childa != null ? childa.Value : string.Empty);
+                                book.Publisher += string.Join(", ", childa != null ? childa.Value : string.Empty);
                             }
                         }
                     }
@@ -828,7 +857,7 @@ namespace TalisScraper
                             if (resourceObj.Items.Title.HasContent())
                                 book.Title += string.Join(", ", resourceObj.Items.Title.Select(n => n.Value));
 
-                            if(resourceObj.Items.Date.HasContent())
+                            if (resourceObj.Items.Date.HasContent())
                                 book.Date.AddRange(resourceObj.Items.Date.Select(n => n.Value));// = resourceObj.Items.Date.FirstOrDefault().Value; //todo: should we check if there are multiple dates?
 
                             if (resourceObj.Items.Subject.HasContent())
@@ -843,8 +872,8 @@ namespace TalisScraper
                             if (resourceObj.Items.Source.HasContent())
                                 book.Source.AddRange(resourceObj.Items.Source.Select(n => n.Value));
 
-                            if(resourceObj.Items.PlaceOfPublication.HasContent())
-                                book.PlaceOfPublication += string.Join(", ", resourceObj.Items.PlaceOfPublication.Select(n => n.Value)); 
+                            if (resourceObj.Items.PlaceOfPublication.HasContent())
+                                book.PlaceOfPublication += string.Join(", ", resourceObj.Items.PlaceOfPublication.Select(n => n.Value));
 
                             book.Url = uri;
                         }
@@ -865,21 +894,10 @@ namespace TalisScraper
 
             return book;
         }
-
-        #endregion
-
-        public bool CancelScrape()
-        {
-            _scrapeCancelled = true;
-
-            if(ScrapeCancelled != null) ScrapeCancelled(this, new ScrapeCancelledEventArgs());
-
-            return true;
-        }
-
         public ScrapeReport FetchScrapeReport()
         {
             return _scrapeReport;
         }
+        #endregion
     }
 }

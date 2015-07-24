@@ -8,7 +8,7 @@ using TalisScraper.Objects.JsonMaps;
 namespace TalisScraper.Interfaces
 {
     /// <summary>
-    /// Scraper to fetch and parse Talis Aspire json reading list information
+    /// Scraper to fetch and parse Talis Aspire reading list information
     /// </summary>
     public interface IScraper
     {
